@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Matches{% endblock %}
+{% block content %}
+<div class="section-label">Matches</div>
+
+{% if matches %}
+<div class="likes-grid">
+  {% for person in matches %}
+    <a class="scrim-card" href="{% url 'profile_detail' person.id %}">
+      {% if person.photo_for_user %}
+        <img src="{{ person.photo_for_user.url }}" alt="{{ person.username }}">
+      {% endif %}
+      <span class="chip chip--match">Match</span>
+      <div class="info">
+        <div class="name">{{ person.username }}<span class="age">, {{ person.age }}</span></div>
+        <div class="town">{{ person.town }}</div>
+      </div>
+    </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="big-icon">&#10084;</div>
+  <strong>No matches yet</strong>
+  <p class="muted">When you and someone else both like each other, they'll show up here.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Payment successful{% endblock %}
+{% block content %}
+<div class="card" style="text-align:center">
+  <h1>Thanks for your payment</h1>
+  <p>Your account will unlock automatically once PayFast confirms the payment — usually within a few seconds.</p>
+  <a href="{% url 'home' %}">Back to Mzansi Link</a>
+</div>
+{% endblock %}

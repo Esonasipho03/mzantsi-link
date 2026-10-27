@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Likes{% endblock %}
+{% block content %}
+<div class="section-label">Likes</div>
+
+<div class="filter-toggle">
+  <a href="{% url 'likes' %}" class="{% if not show_matches_only %}active{% endif %}">All</a>
+  <a href="{% url 'likes' %}?filter=matches" class="{% if show_matches_only %}active{% endif %}">Matches</a>
+</div>
+
+{% if likers %}
+  {% if show_matches_only %}
+    {% for person in likers %}
+      <div class="match-card">
+        <div class="mr-cards">
+          <div class="mr-photo mr-photo--left">
+            {% if my_photo %}<img src="{{ my_photo.url }}" alt="">{% endif %}
+          </div>
+          <div class="mr-heart">&#10084;</div>
+          <div class="mr-photo mr-photo--right">
+            {% if person.photo_for_user %}<img src="{{ person.photo_for_user.url }}" alt="{{ person.username }}">{% endif %}
+          </div>
+        </div>
+        <div class="match-card-name">{{ person.username }}, {{ person.age }}</div>
+        <div class="match-card-town">{{ person.town }}</div>
+        {% if can_message %}
+          <a class="btn-link" href="{% url 'conversation' person.id %}">Say hello</a>
+        {% else %}
+          <a class="btn-link" href="{% url 'start_payment' %}">Unlock to say hello</a>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="likes-grid">
+      {% for person in likers %}
+        <a class="scrim-card" href="{% url 'profile_detail' person.id %}">
+          {% if person.photo_for_user %}
+            <img src="{{ person.photo_for_user.url }}" alt="{{ person.username }}">
+          {% endif %}
+          {% if person.is_match %}
+            <span class="chip chip--match">Match</span>
+          {% endif %}
+          <div class="info">
+            <div class="name">{{ person.username }}<span class="age">, {{ person.age }}</span></div>
+            <div class="town">{{ person.town }}</div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% else %}
+<div class="empty-state">
+  <div class="big-icon">&#9825;</div>
+  {% if show_matches_only %}
+    <strong>No matches yet</strong>
+    <p class="muted">When you and someone else both like each other, they'll show up here.</p>
+  {% else %}
+    <strong>No likes yet</strong>
+    <p class="muted">When someone likes you on Discover, they'll show up here.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

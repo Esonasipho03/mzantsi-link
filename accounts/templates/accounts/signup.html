@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Join Mzansi Link{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-blob auth-blob--1"></div>
+  <div class="auth-blob auth-blob--2"></div>
+
+  <div class="card auth-card auth-card--wide">
+    <span class="auth-avatar">&#10084;</span>
+    <span class="lp-pill"><span class="lp-pill-heart">&#10024;</span> New here</span>
+    <h1>Join Mzansi Link.</h1>
+    <p class="muted auth-sub">Women join free. Everyone else unlocks clear photos and chat for R99, valid for 12 months.</p>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <label for="{{ form.username.id_for_label }}">Username</label>
+      {{ form.username }}
+      {{ form.username.errors }}
+
+      <label for="{{ form.email.id_for_label }}">Email</label>
+      {{ form.email }}
+      {{ form.email.errors }}
+
+      <label for="{{ form.password1.id_for_label }}">Password</label>
+      {{ form.password1 }}
+      {{ form.password1.errors }}
+
+      <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+      {{ form.password2 }}
+      {{ form.password2.errors }}
+
+      <label for="{{ form.age.id_for_label }}">Age</label>
+      {{ form.age }}
+      <span class="muted" style="font-size:13px">Must be 21 or older</span>
+      {{ form.age.errors }}
+
+      <label>Gender</label>
+      {{ form.gender }}
+      {{ form.gender.errors }}
+
+      <label for="{{ form.town.id_for_label }}">Your town</label>
+      {{ form.town }}
+      <span class="muted" style="font-size:13px">Any town in South Africa</span>
+      {{ form.town.errors }}
+
+      <label for="{{ form.photo.id_for_label }}">Photo</label>
+      {{ form.photo }}
+      {{ form.photo.errors }}
+
+      <button type="submit">Create account</button>
+    </form>
+    <p class="muted auth-foot">Already a member? <a href="{% url 'login' %}">Log in</a></p>
+  </div>
+</div>
+{% endblock %}

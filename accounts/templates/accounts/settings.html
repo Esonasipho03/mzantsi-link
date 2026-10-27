@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+
+<div class="section-row">
+  <a href="{% url 'my_profile' %}" class="back-link" style="margin:0">&larr; Back</a>
+  <div class="section-label">Settings</div>
+  <span style="width:38px"></span>
+</div>
+
+<div class="settings-list">
+  <a class="settings-row" href="{% url 'profile_edit' %}">
+    <span class="settings-row-icon">&#9998;</span>
+    <span class="settings-row-text">
+      <strong>Edit profile</strong>
+      <span class="muted">Photo, bio and interests</span>
+    </span>
+    <span class="settings-row-arrow">&rsaquo;</span>
+  </a>
+  <a class="settings-row" href="{% url 'my_profile' %}">
+    <span class="settings-row-icon">&#9679;</span>
+    <span class="settings-row-text">
+      <strong>Account</strong>
+      <span class="muted">{{ profile.username }} &middot; {{ profile.email|default:"No email on file" }}</span>
+    </span>
+    <span class="settings-row-arrow">&rsaquo;</span>
+  </a>
+</div>
+
+<p class="muted" style="margin:16px 2px;font-size:13px">
+  Notifications and favourites aren't wired up yet in this MVP — nothing is hidden here on purpose, there's just not a working toggle to show yet.
+</p>
+
+<form action="{% url 'logout' %}" method="post" style="margin-top:4px">
+  {% csrf_token %}
+  <button type="submit" style="width:100%;background:var(--surface);color:var(--rose-deep);border:1px solid var(--line);box-shadow:none">Log out</button>
+</form>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load chat_extras %}
+{% block title %}Chat with {{ other.username }}{% endblock %}
+{% block body_class %}chat-open{% endblock %}
+{% block content %}
+<div class="chat-page">
+  {% comment %} Chat list sidebar — hidden on mobile (the conversation
+  is full-screen there), shown alongside the open chat on wider
+  screens so you don't lose the list while reading a conversation. {% endcomment %}
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-head">Chats</div>
+    <div class="inbox-list">
+      {% for convo_other, last in conversations %}
+        <a class="inbox-row {% if convo_other.id == other.id %}active{% endif %}" href="{% url 'conversation' convo_other.id %}">
+          {% if convo_other.photo_for_user %}
+            <img class="inbox-avatar" src="{{ convo_other.photo_for_user.url }}" alt="{{ convo_other.username }}">
+          {% else %}
+            <span class="inbox-avatar inbox-avatar--empty"></span>
+          {% endif %}
+          <div class="inbox-text">
+            <div class="inbox-name">{{ convo_other.username }}</div>
+            <div class="inbox-preview muted">
+              {% if last %}{% if last.sender == request.user %}<span class="inbox-you">You:</span> {% endif %}{{ last.text|truncatechars:34 }}{% else %}Say hello&hellip;{% endif %}
+            </div>
+          </div>
+          {% if last %}
+            <div class="inbox-meta"><span class="inbox-time">{{ last.created_at|short_time }}</span></div>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="chat-main">
+    <div class="chat-header">
+      <a class="chat-back" href="{% url 'inbox' %}" aria-label="Back to chats">&larr;</a>
+      <a class="chat-header-id" href="{% url 'profile_detail' other.id %}">
+        {% if other.photo_for_user %}
+          <img class="chat-header-avatar" src="{{ other.photo_for_user.url }}" alt="{{ other.username }}">
+        {% else %}
+          <span class="chat-header-avatar chat-header-avatar--empty"></span>
+        {% endif %}
+        <span class="chat-header-info">
+          <strong>{{ other.username }}</strong>
+          <span class="muted">{{ other.get_town_display }}</span>
+        </span>
+      </a>
+    </div>
+
+    <div class="chat-body" id="chatBody">
+    {% for message in chat_messages %}
+      {% ifchanged message.created_at|day_label %}
+        <div class="chat-day-sep"><span>{{ message.created_at|day_label }}</span></div>
+      {% endifchanged %}
+      <div class="msg-row {% if message.sender == request.user %}mine{% endif %}">
+        {% if message.sender != request.user %}
+          {% if other.photo_for_user %}
+            <img class="msg-avatar" src="{{ other.photo_for_user.url }}" alt="">
+          {% else %}
+            <span class="msg-avatar msg-avatar--empty"></span>
+          {% endif %}
+        {% endif %}
+        <div class="msg-col">
+          <span class="msg-bubble">{{ message.text }}</span>
+          <span class="msg-time">{{ message.created_at|date:"H:i" }}</span>
+        </div>
+      </div>
+    {% empty %}
+      <div class="empty-state">
+        <div class="big-icon">&#128075;</div>
+        <strong>Say hello to {{ other.username }}</strong>
+        <p class="muted">No messages yet — break the ice.</p>
+      </div>
+    {% endfor %}
+    </div>
+
+    <form method="post" class="chat-input-bar">
+      {% csrf_token %}
+      {{ form.text }}
+      <button type="submit" class="chat-send-btn" aria-label="Send">&#10148;</button>
+    </form>
+    {{ form.text.errors }}
+  </div>
+</div>
+
+<script>
+  (function () {
+    var body = document.getElementById('chatBody');
+    if (body) { body.scrollTop = body.scrollHeight; }
+  })();
+</script>
+{% endblock %}

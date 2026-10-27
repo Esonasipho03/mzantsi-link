@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load chat_extras %}
+{% block title %}Chats{% endblock %}
+{% block content %}
+<div class="section-row">
+  <div class="section-label">Chats</div>
+</div>
+
+<div class="inbox-list">
+  {% for other, last in conversations %}
+    <a class="inbox-row" href="{% url 'conversation' other.id %}">
+      {% if other.photo_for_user %}
+        <img class="inbox-avatar" src="{{ other.photo_for_user.url }}" alt="{{ other.username }}">
+      {% else %}
+        <span class="inbox-avatar inbox-avatar--empty"></span>
+      {% endif %}
+      <div class="inbox-text">
+        <div class="inbox-name">{{ other.username }}</div>
+        <div class="inbox-preview muted">
+          {% if last.sender == request.user %}<span class="inbox-you">You:</span> {% endif %}{{ last.text|truncatechars:42 }}
+        </div>
+      </div>
+      <div class="inbox-meta">
+        <span class="inbox-time">{{ last.created_at|short_time }}</span>
+      </div>
+    </a>
+  {% empty %}
+    <div class="empty-state">
+      <div class="big-icon">&#128172;</div>
+      <strong>No conversations yet</strong>
+      <p class="muted">Say hello to someone from Discover to start chatting.</p>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

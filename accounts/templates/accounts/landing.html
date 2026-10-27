@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mzansi Link — meet South African singles{% endblock %}
+{% block body_class %}landing{% endblock %}
+{% block content %}
+
+<section class="lp-hero">
+  <div class="lp-hero-blob lp-hero-blob--1"></div>
+  <div class="lp-hero-blob lp-hero-blob--2"></div>
+
+  <div class="lp-hero-text">
+    <span class="lp-pill"><span class="lp-pill-heart">&#10084;</span> Rooted in Mzansi. Open to love.</span>
+    <h1>Mzansi Link.<br>Real people.<br><span class="lp-accent lp-accent--shimmer">Real connection.</span></h1>
+    <p class="lp-sub">
+      Someone who gets your vibe. Your culture. Your kind of love.
+      Find a connection that feels like home.
+    </p>
+    <div class="lp-hero-ctas">
+      <a class="btn-link btn-link--glow" href="{% url 'signup' %}">Find your person &rarr;</a>
+      <a class="lp-wander-link" href="#how">or just wander through first &darr;</a>
+    </div>
+    <p class="lp-hero-live"><span class="lp-live-dot"></span> <span class="lp-live-count" data-count-to="128">0</span> people from across South Africa are online right now</p>
+    <p class="lp-hero-tagline"><span class="lp-pill-heart">&#9825;</span> A little hello. A whole lot of possibility.</p>
+  </div>
+
+  <div class="lp-hero-media">
+    <div class="lp-hero-dot lp-hero-dot--1"></div>
+    <div class="lp-hero-dot lp-hero-dot--2"></div>
+    <div class="lp-hero-dot lp-hero-dot--3"></div>
+    <div class="lp-hero-photo">
+      <div class="lp-heart-stream" id="lpHeartStream" aria-hidden="true"></div>
+      <div class="lp-hero-road" aria-hidden="true">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="lpRoadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:var(--amber)"></stop>
+              <stop offset="55%" style="stop-color:var(--rose)"></stop>
+              <stop offset="100%" style="stop-color:var(--violet)"></stop>
+            </linearGradient>
+          </defs>
+          <path id="lpRoadPath" class="lp-road-line"
+                d="M10,12 C32,8 18,32 42,35 C64,38 54,58 74,60" />
+          <g class="lp-road-vehicle">
+            <animateMotion dur="7s" repeatCount="indefinite" rotate="0" calcMode="linear">
+              <mpath href="#lpRoadPath"></mpath>
+            </animateMotion>
+            <text class="lp-road-heart" x="3" y="-4.5" font-size="4" text-anchor="middle">&#128149;</text>
+            <text class="lp-road-rickshaw" x="0" y="0" font-size="9" text-anchor="middle" dominant-baseline="central">&#128690;</text>
+          </g>
+        </svg>
+      </div>
+      <div class="lp-hero-bubble">Hi &#128075;</div>
+      <div class="lp-hero-match-card">
+        <span class="lp-hero-match-dot"></span>
+        <div>
+          <strong>Lindiwe, 27</strong>
+          <span>2.4 km away &middot; Says hello</span>
+        </div>
+      </div>
+      <div class="lp-hero-float-card">
+        <span class="lp-hero-float-heart">&#10084;</span>
+        <strong>Your next chapter starts here.</strong>
+        <span>And it starts with &ldquo;hey&rdquo;.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-trustbar" data-reveal>
+  <span class="lp-trustbar-item"><span class="lp-trustbar-icon">&#128205;</span>Made for Mzansi</span>
+  <span class="lp-trustbar-item"><span class="lp-trustbar-icon">&#9825;</span>More than a swipe</span>
+  <span class="lp-trustbar-item"><span class="lp-trustbar-icon">&#10024;</span>Come as you are</span>
+</section>
+
+<section id="how" class="lp-howhello" data-reveal>
+  <span class="lp-pill">A new kind of hello</span>
+  <h2>Less searching. More connecting.</h2>
+  <p class="lp-section-sub lp-howhello-sub">From the first hello to something that feels real.</p>
+  <div class="lp-howsteps">
+    <div class="lp-howstep">
+      <span class="lp-howstep-icon lp-howstep-icon--rose">&#128100;</span>
+      <h3>01. Be a little you</h3>
+      <p>Your interests, your quirks, your story. Let the real you make the first impression.</p>
+    </div>
+    <div class="lp-howstep">
+      <span class="lp-howstep-icon lp-howstep-icon--amber">&#9825;</span>
+      <h3>02. Find your kind of person</h3>
+      <p>Shared roots. Different stories. Discover people you'd love to get to know.</p>
+    </div>
+    <div class="lp-howstep">
+      <span class="lp-howstep-icon lp-howstep-icon--violet">&#128172;</span>
+      <h3>03. See where hello goes</h3>
+      <p>Start a conversation. Share a laugh. Let a small spark become something more.</p>
+    </div>
+  </div>
+</section>
+
+<section class="lp-tour" data-reveal>
+  <div class="lp-tour-text">
+    <span class="lp-pill"><span class="lp-pill-heart">&#10024;</span> Like what you're seeing?</span>
+    <p>There's a whole community waiting on the other side of &ldquo;hey&rdquo;. Take the tour &mdash; we'll keep the door open.</p>
+  </div>
+  <a class="btn-ghost lp-tour-cta" href="{% url 'signup' %}">Save me a seat &rarr;</a>
+</section>
+
+<section class="lp-safety" data-reveal>
+  <div class="lp-safety-text">
+    <span class="lp-pill lp-pill--safety"><span class="lp-pill-heart">&#128737;</span> On your terms</span>
+    <h2>Open your heart.<br>Trust your instincts.</h2>
+    <p class="lp-section-sub">A great connection should feel comfortable. Take your time, keep your boundaries, and put yourself first.</p>
+  </div>
+  <div class="lp-safety-list">
+    <div class="lp-safety-item">
+      <span class="lp-safety-icon">&#10003;</span>
+      <div>
+        <strong>Move at your own pace</strong>
+        <p>You never owe anyone a conversation or a date.</p>
+      </div>
+    </div>
+    <div class="lp-safety-item">
+      <span class="lp-safety-icon">&#128274;</span>
+      <div>
+        <strong>Keep personal details personal</strong>
+        <p>Don't share financial information or send money.</p>
+      </div>
+    </div>
+    <div class="lp-safety-item">
+      <span class="lp-safety-icon">&#128205;</span>
+      <div>
+        <strong>Make the first meet a public one</strong>
+        <p>Choose a familiar spot and tell someone you trust.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-faq" data-reveal>
+  <span class="lp-pill">Good questions</span>
+  <h2>A little more about Mzansi Link.</h2>
+  <div class="lp-faq-list">
+    <details class="lp-faq-item">
+      <summary>What is Mzansi Link?<span class="lp-faq-toggle">&#43;</span></summary>
+      <p>A dating site built for South Africa. Every profile is checked by a real person before it goes live, so you know you're meeting real people, not bots or catfish.</p>
+    </details>
+    <details class="lp-faq-item">
+      <summary>Can I start meeting people yet?<span class="lp-faq-toggle">&#43;</span></summary>
+      <p>Yes &mdash; sign up, add a photo and a few details, and once a moderator approves your profile you can start swiping, matching and chatting right away.</p>
+    </details>
+    <details class="lp-faq-item">
+      <summary>Do I have to be looking for something serious?<span class="lp-faq-toggle">&#43;</span></summary>
+      <p>Not at all. Mzansi Link is for whatever kind of connection you're after &mdash; come as you are and be upfront about what you want.</p>
+    </details>
+    <details class="lp-faq-item">
+      <summary>Is it free to join?<span class="lp-faq-toggle">&#43;</span></summary>
+      <p>Signing up and browsing is free for everyone. Women can chat free, always. Everyone else browses free and unlocks chat with an R99 payment, valid for 12 months.</p>
+    </details>
+  </div>
+</section>
+
+<section class="lp-cta" data-reveal>
+  <span class="lp-cta-heart">&#10084;</span>
+  <h2 class="section-label" style="font-size:26px">Your person could be closer than you think.</h2>
+  <p>Different stories. One beautiful place to begin.</p>
+  <a class="btn-link btn-link--glow" href="{% url 'signup' %}">Count me in &rarr;</a>
+  <p class="lp-cta-microcopy">No pressure &mdash; the door stays open.</p>
+</section>
+
+<footer class="lp-footer">
+  <span>Mzansi Link &mdash; made with heart, for South Africa.</span>
+  <span>&copy; 2026 Mzansi Link. All rights reserved.</span>
+</footer>
+
+<script>
+  // Fades/slides each section into view as the visitor scrolls to it —
+  // keeps the page feeling alive past the hero, not just on load.
+  // Reduced-motion users get the content instantly (see the CSS media
+  // query), so this only adds motion for people who want it.
+  (function () {
+    var targets = document.querySelectorAll('[data-reveal]');
+    if (!targets.length) return;
+    if (!('IntersectionObserver' in window)) {
+      targets.forEach(function (el) { el.classList.add('is-visible'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    targets.forEach(function (el) { io.observe(el); });
+  })();
+
+  // Counts the "people online" number up from 0 on load, so the hero
+  // feels like it's reporting something happening right now rather
+  // than printing a static figure.
+  (function () {
+    var el = document.querySelector('[data-count-to]');
+    if (!el) return;
+    var target = parseInt(el.getAttribute('data-count-to'), 10) || 0;
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) { el.textContent = target; return; }
+    var start = null, duration = 1400;
+    function step(ts) {
+      if (!start) start = ts;
+      var progress = Math.min((ts - start) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(eased * target);
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  })();
+
+  // A steady little stream of grey hearts drifting up past the hero
+  // photo, the way a "like" burst does on a live stream — several
+  // on screen at once, not just a single repeating one.
+  (function () {
+    var host = document.getElementById('lpHeartStream');
+    if (!host) return;
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return;
+    function spawnHeart() {
+      var heart = document.createElement('span');
+      heart.className = 'lp-heart-rise';
+      heart.textContent = '\u{1FA76}'; // grey heart
+      var left = 4 + Math.random() * 30;      // % within the stream's lane
+      var drift = (Math.random() * 40 - 20);  // px of horizontal wander
+      var size = 14 + Math.random() * 12;     // px
+      var duration = 5 + Math.random() * 2.5; // seconds
+      heart.style.left = left + '%';
+      heart.style.fontSize = size + 'px';
+      heart.style.setProperty('--lp-heart-drift', drift + 'px');
+      heart.style.animationDuration = duration + 's';
+      host.appendChild(heart);
+      setTimeout(function () { heart.remove(); }, duration * 1000 + 200);
+    }
+    for (var i = 0; i < 3; i++) { setTimeout(spawnHeart, i * 500); }
+    setInterval(spawnHeart, 900);
+  })();
+
+  // The rickshaw-on-a-road animation runs as native SVG SMIL, which the
+  // global CSS reduced-motion kill-switch can't reach (it only stops
+  // CSS animations) — so freeze it here by hand when that's preferred.
+  (function () {
+    var roadSvg = document.querySelector('.lp-hero-road svg');
+    if (!roadSvg) return;
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion && typeof roadSvg.pauseAnimations === 'function') {
+      roadSvg.pauseAnimations();
+    }
+  })();
+</script>
+
+{% endblock %}

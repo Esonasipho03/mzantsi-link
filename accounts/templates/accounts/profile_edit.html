@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Edit profile{% endblock %}
+{% block content %}
+
+<div class="section-row">
+  <a href="{% url 'my_profile' %}" class="back-link" style="margin:0">&larr; Back</a>
+  <div class="section-label">Edit profile</div>
+  <span style="width:38px"></span>
+</div>
+
+<div class="card">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+    {% if profile.photo %}
+      <img src="{{ profile.photo.url }}" alt="{{ profile.username }}"
+           style="width:64px;height:64px;border-radius:50%;object-fit:cover;flex-shrink:0">
+    {% else %}
+      <div style="width:64px;height:64px;border-radius:50%;background:#eee;flex-shrink:0"></div>
+    {% endif %}
+    <div>
+      <strong style="font-family:'Baloo 2',sans-serif;font-size:17px">{{ profile.username }}, {{ profile.age }}</strong>
+      <div class="muted" style="font-size:13px">{{ profile.town }}</div>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <label for="{{ form.photo.id_for_label }}">Photo</label>
+    {{ form.photo }}
+    <span class="muted" style="font-size:13px">{{ form.photo.help_text }}</span>
+    {{ form.photo.errors }}
+
+    <label for="{{ form.bio.id_for_label }}">About me</label>
+    {{ form.bio }}
+    <span class="muted" style="font-size:13px">{{ form.bio.help_text }}</span>
+    {{ form.bio.errors }}
+
+    <label>Interests</label>
+    <div class="chip-row">
+      {% for checkbox in form.interests %}
+        <label class="chip-toggle">
+          {{ checkbox.tag }}
+          <span>{{ checkbox.choice_label }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    {{ form.interests.errors }}
+
+    <button type="submit">Save changes</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <strong style="font-family:'Baloo 2',sans-serif;font-size:16px">More photos</strong>
+  <p class="muted" style="font-size:13px;margin:4px 0 14px">
+    Add up to {{ gallery_max }} extra photos — shown on your full profile, same blur rule as your main photo.
+  </p>
+
+  <div class="gallery-grid">
+    {% for extra in gallery_photos %}
+      <div class="gallery-tile">
+        <img src="{{ extra.photo.url }}" alt="">
+        <form method="post" action="{% url 'gallery_photo_delete' extra.id %}" class="gallery-remove-form">
+          {% csrf_token %}
+          <button type="submit" class="gallery-remove-btn" aria-label="Remove photo">&times;</button>
+        </form>
+      </div>
+    {% endfor %}
+
+    {% if gallery_slots_left %}
+      <form method="post" action="{% url 'gallery_photo_upload' %}" enctype="multipart/form-data" id="galleryUploadForm">
+        {% csrf_token %}
+        <label class="gallery-add-tile" for="galleryPhotosInput">
+          <span class="gallery-add-icon">&#43;</span>
+          <span>Add photo</span>
+        </label>
+        <input type="file" id="galleryPhotosInput" name="gallery_photos" accept="image/*" multiple style="display:none">
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  (function () {
+    var input = document.getElementById('galleryPhotosInput');
+    var form = document.getElementById('galleryUploadForm');
+    if (input && form) {
+      input.addEventListener('change', function () {
+        if (input.files.length) form.submit();
+      });
+    }
+  })();
+</script>
+{% endblock %}

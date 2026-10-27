@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% block title %}Mzansi Link{% endblock %}
+{% block content %}
+
+{% if show_unlock_banner %}
+<div class="banner">
+  <span>Photos are blurred. Unlock them and chat for R99 — valid for 12 months.</span>
+  <form method="post" action="{% url 'start_payment' %}" style="margin:0">
+    {% csrf_token %}
+    <button type="submit">Unlock</button>
+  </form>
+</div>
+{% endif %}
+
+{% comment %} Swipe deck first, large — the "nearby" strip moved below (shrunk) so the card is the first big thing on the screen instead of sharing the top with it. {% endcomment %}
+<div class="section-row">
+  <div class="section-label">Discover</div>
+  <button type="button" class="icon-btn" id="filterOpenBtn" aria-label="Filter">&#9881;</button>
+</div>
+
+<div class="swipe-stage swipe-stage--big" id="swipeStage">
+  {% for profile in stack_profiles %}
+    <div class="swipe-card scrim-card" data-user-id="{{ profile.id }}" data-username="{{ profile.username }}">
+      <span class="stamp stamp--like">Like</span>
+      <span class="stamp stamp--pass">Pass</span>
+      {% if profile.photo_for_user %}
+        <img src="{{ profile.photo_for_user.url }}" alt="{{ profile.username }}" draggable="false">
+      {% endif %}
+      <span class="chip chip--left"><span class="chip--dot"></span>{{ profile.town }}</span>
+      {% if profile.bio or profile.interest_labels %}
+        <button type="button" class="card-expand-btn" aria-label="More about {{ profile.username }}">&#8599;</button>
+        <div class="card-detail">
+          {% if profile.bio %}<p class="bio">{{ profile.bio }}</p>{% endif %}
+          {% if profile.interest_labels %}
+            <div class="chip-row">
+              {% for label in profile.interest_labels %}<span class="chip-static">{{ label }}</span>{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+      <div class="info">
+        <div class="name">{{ profile.username }}<span class="age">, {{ profile.age }}</span></div>
+        <div class="town">{{ profile.town }}</div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="swipe-empty">
+      <span class="big-icon">&#10024;</span>
+      <strong>You're all caught up</strong>
+      <span class="muted">No new profiles to show right now — check back soon, or browse everyone below.</span>
+    </div>
+  {% endfor %}
+</div>
+
+{% if stack_profiles %}
+<div class="swipe-actions">
+  <button type="button" class="swipe-btn swipe-btn--pass" id="btnPass" aria-label="Pass">&#10005;</button>
+  <button type="button" class="swipe-btn swipe-btn--super" id="btnSuper" aria-label="Super like">&#9733;</button>
+  <button type="button" class="swipe-btn swipe-btn--like" id="btnLike" aria-label="Like">&#9825;</button>
+</div>
+{% endif %}
+
+{% if nearby_profiles %}
+<div class="section-label" style="margin-top:22px">Nearby</div>
+<div class="stories stories--small">
+  {% for profile in nearby_profiles %}
+    <a class="story-item" href="{% url 'profile_detail' profile.id %}">
+      <span class="story-ring">
+        <span class="story-ring-inner">
+          {% if profile.photo_for_user %}
+            <img src="{{ profile.photo_for_user.url }}" alt="{{ profile.username }}">
+          {% else %}
+            <span class="story-fallback"></span>
+          {% endif %}
+        </span>
+      </span>
+      <span class="story-name">{{ profile.username }}</span>
+    </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if profiles %}
+<div class="section-label" style="margin-top:28px">Browse all</div>
+<div class="grid" id="browseGrid">
+  {% for profile in profiles %}
+    <a class="pcard{% if forloop.counter0 >= 6 %} pcard-extra{% endif %}" href="{% url 'profile_detail' profile.id %}">
+      {% with photo=profile.photo_for_user %}
+        {% if photo %}
+          <img src="{{ photo.url }}" alt="{{ profile.username }}">
+        {% else %}
+          <div style="aspect-ratio:3/4;background:#eee"></div>
+        {% endif %}
+      {% endwith %}
+      <div class="info">
+        <div class="name">{{ profile.username }}, {{ profile.age }}</div>
+        <div class="town">{{ profile.town }}</div>
+      </div>
+    </a>
+  {% endfor %}
+</div>
+{% if profiles|length > 6 %}
+  <button type="button" class="btn-ghost" id="browseShowMoreBtn" style="display:block;width:100%;margin-top:12px">
+    Show more ({{ profiles|length|add:"-6" }})
+  </button>
+{% endif %}
+{% else %}
+  <p class="muted">No approved members yet.</p>
+{% endif %}
+
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<form class="sheet" id="filterSheet" method="get">
+  <div class="sheet-handle"></div>
+  <h2>Filter</h2>
+  <label for="townSelect">Town</label>
+  <input type="text" id="townSelect" name="town" value="{{ selected_town }}" placeholder="Any town">
+  <div class="row">
+    <div>
+      <label for="minAge">Min age</label>
+      <input type="number" id="minAge" name="min_age" min="21" value="{{ min_age }}" placeholder="21">
+    </div>
+    <div>
+      <label for="maxAge">Max age</label>
+      <input type="number" id="maxAge" name="max_age" min="21" value="{{ max_age }}" placeholder="60">
+    </div>
+  </div>
+  <div class="sheet-actions">
+    <button type="button" class="btn-ghost" id="filterClearBtn">Clear</button>
+    <button type="submit">Apply</button>
+  </div>
+</form>
+
+<div class="match-reveal-backdrop" id="matchReveal">
+  <div class="match-reveal-card">
+    <button type="button" class="match-reveal-close" id="matchRevealClose" aria-label="Close">&times;</button>
+    <div class="mr-cards">
+      <div class="mr-photo mr-photo--left">
+        <img id="mrMyPhoto" src="" alt="">
+        <div class="mr-photo-info"><span id="mrMyName"></span></div>
+      </div>
+      <div class="mr-heart">&#10084;</div>
+      <div class="mr-photo mr-photo--right">
+        <img id="mrTheirPhoto" src="" alt="">
+        <div class="mr-photo-info"><span id="mrTheirName"></span></div>
+      </div>
+    </div>
+    <h2 class="mr-title">You have found your match!</h2>
+    <p class="mr-sub" id="mrSub"></p>
+    <a class="btn-link" id="mrSayHello" href="#">Say hello!</a>
+    <button type="button" class="btn-ghost" id="mrKeepSwiping" style="margin-top:10px">Keep swiping</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  function getCookie(name) {
+    const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return match ? decodeURIComponent(match[2]) : null;
+  }
+  const csrftoken = getCookie('csrftoken');
+  const canMessage = {% if show_unlock_banner %}false{% else %}true{% endif %};
+
+  // ---- filter sheet ----
+  const openBtn = document.getElementById('filterOpenBtn');
+  const backdrop = document.getElementById('sheetBackdrop');
+  const sheet = document.getElementById('filterSheet');
+  const clearBtn = document.getElementById('filterClearBtn');
+  function openSheet() { backdrop.classList.add('open'); sheet.classList.add('open'); }
+  function closeSheet() { backdrop.classList.remove('open'); sheet.classList.remove('open'); }
+  if (openBtn) {
+    openBtn.addEventListener('click', openSheet);
+    backdrop.addEventListener('click', closeSheet);
+    clearBtn.addEventListener('click', function () {
+      document.getElementById('townSelect').value = '';
+      document.getElementById('minAge').value = '';
+      document.getElementById('maxAge').value = '';
+      sheet.submit();
+    });
+  }
+
+  // ---- browse all: collapsed to 6 by default ----
+  const showMoreBtn = document.getElementById('browseShowMoreBtn');
+  if (showMoreBtn) {
+    showMoreBtn.addEventListener('click', function () {
+      document.getElementById('browseGrid').classList.add('show-all');
+      showMoreBtn.style.display = 'none';
+    });
+  }
+
+  // ---- swipe-card stack ----
+  const stage = document.getElementById('swipeStage');
+  if (!stage) return;
+  const reveal = document.getElementById('matchReveal');
+
+  function topCard() {
+    const cards = stage.querySelectorAll('.swipe-card');
+    return cards.length ? cards[cards.length - 1] : null;
+  }
+
+  // Multi-card peek: the top card sits at full size; the next two peek
+  // out from behind it, scaled down and nudged up; anything deeper is
+  // hidden (no visual benefit, keeps the DOM light).
+  function layoutStack() {
+    const cards = Array.from(stage.querySelectorAll('.swipe-card'));
+    const total = cards.length;
+    cards.forEach(function (card, i) {
+      const fromTop = total - 1 - i;
+      if (fromTop === 0) {
+        card.style.zIndex = 10;
+        card.style.display = '';
+        card.style.transform = '';
+        card.style.opacity = '1';
+        card.style.filter = '';
+      } else if (fromTop <= 2) {
+        card.style.zIndex = String(10 - fromTop);
+        card.style.display = '';
+        card.style.transform = 'translateY(-' + (fromTop * 16) + 'px) scale(' + (1 - fromTop * 0.06) + ')';
+        card.style.opacity = '1';
+        card.style.filter = 'brightness(' + (1 - fromTop * 0.14) + ')';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+  layoutStack();
+
+  // Expand/collapse the "About me" detail panel. A dedicated button
+  // (not tap-anywhere) so it never fights with the drag-to-swipe gesture.
+  stage.querySelectorAll('.card-expand-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      btn.closest('.swipe-card').classList.toggle('expanded');
+    });
+  });
+
+  function showMatchReveal(data) {
+    document.getElementById('mrMyPhoto').src = data.my_photo || '';
+    document.getElementById('mrTheirPhoto').src = data.target_photo || '';
+    document.getElementById('mrMyName').textContent = data.my_username + (data.my_age ? ', ' + data.my_age : '');
+    document.getElementById('mrTheirName').textContent = data.username + (data.target_age ? ', ' + data.target_age : '');
+    document.getElementById('mrSub').textContent = 'You and ' + data.username + ' liked each other.';
+    const helloBtn = document.getElementById('mrSayHello');
+    if (canMessage) {
+      helloBtn.href = '/chat/with/' + data.target_id + '/';
+      helloBtn.textContent = 'Say hello!';
+    } else {
+      helloBtn.href = '/payments/start/';
+      helloBtn.textContent = 'Unlock to say hello';
+    }
+    reveal.classList.add('open');
+  }
+
+  function closeMatchReveal() { reveal.classList.remove('open'); }
+  document.getElementById('matchRevealClose').addEventListener('click', closeMatchReveal);
+  document.getElementById('mrKeepSwiping').addEventListener('click', closeMatchReveal);
+  reveal.addEventListener('click', function (e) { if (e.target === reveal) closeMatchReveal(); });
+
+  function sendSwipe(userId, action, username) {
+    fetch('/swipe/' + userId + '/' + action + '/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken },
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (data && data.match) {
+        data.target_id = userId;
+        showMatchReveal(data);
+      }
+    }).catch(function () { /* best-effort — card already moved on */ });
+  }
+
+  function retireCard(card, direction) {
+    if (!card) return;
+    const userId = card.dataset.userId;
+    const username = card.dataset.username;
+    const action = direction === 'left' ? 'pass' : 'like';
+    const stamp = card.querySelector(direction === 'left' ? '.stamp--pass' : '.stamp--like');
+    if (stamp) stamp.style.opacity = 1;
+    const flyX = direction === 'left' ? -600 : 600;
+    card.style.transform = 'translate(' + flyX + 'px, -40px) rotate(' + (direction === 'left' ? -24 : 24) + 'deg)';
+    card.style.opacity = '0';
+    sendSwipe(userId, action, username);
+    setTimeout(function () {
+      card.remove();
+      if (!stage.querySelector('.swipe-card')) {
+        stage.innerHTML = '<div class="swipe-empty"><span class="big-icon">&#10024;</span>' +
+          '<strong>You\'re all caught up</strong>' +
+          '<span class="muted">No new profiles to show right now — check back soon, or browse everyone below.</span></div>';
+        const actions = document.querySelector('.swipe-actions');
+        if (actions) actions.remove();
+      } else {
+        layoutStack();
+      }
+    }, 260);
+  }
+
+  document.getElementById('btnPass').addEventListener('click', function () { retireCard(topCard(), 'left'); });
+  document.getElementById('btnLike').addEventListener('click', function () { retireCard(topCard(), 'right'); });
+  document.getElementById('btnSuper').addEventListener('click', function () { retireCard(topCard(), 'right'); });
+
+  // Drag-to-swipe on the top card
+  let dragging = null, startX = 0, startY = 0, dx = 0;
+
+  stage.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('.card-expand-btn')) return;
+    const card = topCard();
+    if (!card || !card.contains(e.target)) return;
+    if (card.classList.contains('expanded')) return;
+    dragging = card;
+    startX = e.clientX; startY = e.clientY; dx = 0;
+    card.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    dx = e.clientX - startX;
+    const dy = (e.clientY - startY) * 0.4;
+    const rotate = dx / 18;
+    dragging.style.transform = 'translate(' + dx + 'px,' + dy + 'px) rotate(' + rotate + 'deg)';
+    const likeStamp = dragging.querySelector('.stamp--like');
+    const passStamp = dragging.querySelector('.stamp--pass');
+    if (likeStamp) likeStamp.style.opacity = Math.max(0, Math.min(1, dx / 90));
+    if (passStamp) passStamp.style.opacity = Math.max(0, Math.min(1, -dx / 90));
+  });
+  function endDrag() {
+    if (!dragging) return;
+    const card = dragging;
+    dragging = null;
+    if (Math.abs(dx) > 100) {
+      retireCard(card, dx > 0 ? 'right' : 'left');
+    } else {
+      card.style.transform = '';
+      const likeStamp = card.querySelector('.stamp--like');
+      const passStamp = card.querySelector('.stamp--pass');
+      if (likeStamp) likeStamp.style.opacity = 0;
+      if (passStamp) passStamp.style.opacity = 0;
+    }
+  }
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
+})();
+</script>
+{% endblock %}

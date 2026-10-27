@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Admin dashboard{% endblock %}
+{% block content %}
+
+<div class="section-label">Admin dashboard</div>
+<p class="muted" style="margin-top:-4px">Signed in as {{ request.user.username }} (staff)</p>
+
+<div class="stat-grid">
+  <div class="stat-card"><strong>{{ stats.total }}</strong><span>Total accounts</span></div>
+  <div class="stat-card stat-card--accent"><strong>{{ stats.pending }}</strong><span>Waiting for approval</span></div>
+  <div class="stat-card"><strong>{{ stats.approved }}</strong><span>Approved</span></div>
+  <div class="stat-card"><strong>{{ stats.women }}</strong><span>Women (free)</span></div>
+  <div class="stat-card"><strong>{{ stats.paying }}</strong><span>Paying members</span></div>
+  <div class="stat-card"><strong>{{ stats.unlocked_paying }}</strong><span>Currently unlocked</span></div>
+</div>
+
+<div class="section-label" style="margin-top:28px">Waiting for approval</div>
+{% if pending %}
+<div class="admin-list">
+  {% for person in pending %}
+    <div class="admin-row">
+      {% if person.photo %}
+        <img class="admin-thumb" src="{{ person.photo.url }}" alt="{{ person.username }}">
+      {% else %}
+        <div class="admin-thumb admin-thumb--empty"></div>
+      {% endif %}
+      <div class="admin-row-text">
+        <strong>{{ person.username }}, {{ person.age }}</strong>
+        <span class="muted">{{ person.get_gender_display }} &middot; {{ person.town }} &middot; joined {{ person.date_joined|date:"d M Y" }}</span>
+      </div>
+      <div class="admin-row-actions">
+        <form method="post" action="{% url 'staff_approve' person.id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-approve">Approve</button>
+        </form>
+        <form method="post" action="{% url 'staff_reject' person.id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-reject">Reject</button>
+        </form>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="muted">Nothing waiting — you're all caught up.</p>
+{% endif %}
+
+<div class="section-label" style="margin-top:28px">All approved members</div>
+{% if members %}
+<div class="admin-list">
+  {% for person in members %}
+    <div class="admin-row">
+      {% if person.photo %}
+        <img class="admin-thumb" src="{{ person.photo.url }}" alt="{{ person.username }}">
+      {% else %}
+        <div class="admin-thumb admin-thumb--empty"></div>
+      {% endif %}
+      <div class="admin-row-text">
+        <strong>{{ person.username }}, {{ person.age }}</strong>
+        <span class="muted">{{ person.get_gender_display }} &middot; {{ person.town }}</span>
+      </div>
+      <div class="admin-row-actions">
+        {% if person.gender != "woman" %}
+          <form method="post" action="{% url 'staff_toggle_unlock' person.id %}">
+            {% csrf_token %}
+            <button type="submit" class="{% if person.has_active_unlock %}btn-reject{% else %}btn-approve{% endif %}">
+              {% if person.has_active_unlock %}Lock{% else %}Unlock{% endif %}
+            </button>
+          </form>
+          {% if person.has_active_unlock and person.unlock_expires_at %}
+            <span class="muted" style="font-size:0.78rem">until {{ person.unlock_expires_at|date:"d M Y" }}</span>
+          {% endif %}
+        {% else %}
+          <span class="chip-static">Always free</span>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="muted">No approved members yet.</p>
+{% endif %}
+{% endblock %}

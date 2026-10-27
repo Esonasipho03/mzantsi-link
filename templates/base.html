@@ -1,0 +1,83 @@
+{% load static cache_bust %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>{% block title %}Mzansi Link{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static_v 'css/style.css' %}">
+  <script>
+    // Applied before paint so there's no flash of the wrong theme.
+    (function () {
+      try {
+        var saved = localStorage.getItem('mzansi-theme');
+        if (saved === 'dark' || saved === 'light') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <header>
+    <a class="brand" href="{% url 'home' %}">Mzansi Link</a>
+    <div style="display:flex;align-items:center;gap:8px">
+      {% if user.is_authenticated and user.is_staff %}
+        <a href="{% url 'staff_dashboard' %}" class="icon-btn" aria-label="Admin dashboard" style="text-decoration:none">&#128737;</a>
+      {% endif %}
+      <button type="button" id="themeToggleBtn" class="icon-btn" aria-label="Toggle dark mode" style="margin:0">&#127769;</button>
+      {% if user.is_authenticated %}
+        <form action="{% url 'logout' %}" method="post" style="margin:0">
+          {% csrf_token %}
+          <button type="submit" style="margin:0;background:transparent;color:var(--muted);border:1px solid var(--line)">Log out</button>
+        </form>
+      {% else %}
+        <a href="{% url 'login' %}" class="btn-link" style="margin:0;background:transparent;box-shadow:none;color:var(--ink);border:1px solid var(--line);padding:10px 20px">Log in</a>
+        <a href="{% url 'signup' %}" class="btn-link" style="margin:0;padding:10px 20px">Join free</a>
+      {% endif %}
+    </div>
+  </header>
+  <div class="container">
+    {% if messages %}
+      {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+  </div>
+  {% if user.is_authenticated and user.is_approved and request.resolver_match.url_name != 'conversation' %}
+  <nav class="tabbar">
+    <a class="tab {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">
+      <span class="tab-icon">&#128293;</span>Discover
+    </a>
+    <a class="tab {% if request.resolver_match.url_name == 'likes' %}active{% endif %}" href="{% url 'likes' %}">
+      <span class="tab-icon">&#9825;</span>Likes
+    </a>
+    <a class="tab {% if request.resolver_match.url_name == 'inbox' or request.resolver_match.url_name == 'conversation' %}active{% endif %}" href="{% url 'inbox' %}">
+      <span class="tab-icon">&#9993;</span>Chats
+    </a>
+    <a class="tab {% if request.resolver_match.url_name == 'my_profile' %}active{% endif %}" href="{% url 'my_profile' %}">
+      <span class="tab-icon">&#9679;</span>Profile
+    </a>
+  </nav>
+  {% endif %}
+  <script>
+    (function () {
+      var btn = document.getElementById('themeToggleBtn');
+      function current() {
+        return document.documentElement.getAttribute('data-theme') ||
+          (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      }
+      function paintIcon() { btn.textContent = current() === 'dark' ? '☀️' : '🌙'; }
+      paintIcon();
+      btn.addEventListener('click', function () {
+        var next = current() === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('mzansi-theme', next); } catch (e) {}
+        paintIcon();
+      });
+    })();
+  </script>
+</body>
+</html>

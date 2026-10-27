@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.username }}{% endblock %}
+{% block content %}
+
+<a href="javascript:history.back()" class="back-link">&larr; Back</a>
+
+<div class="profile-card">
+  <div class="pd-hero">
+    {% if photo %}
+      <img class="profile-photo" src="{{ photo.url }}" alt="{{ profile.username }}">
+    {% else %}
+      <div class="profile-photo profile-photo--empty"></div>
+    {% endif %}
+    {% if they_liked_me %}
+      <span class="chip chip--left" style="position:absolute;top:14px;left:14px;background:var(--grad-brand)">&#10084; Liked you</span>
+    {% endif %}
+  </div>
+
+  <div class="pd-header-row">
+    {% if photo %}<div class="pd-avatar"><img src="{{ photo.url }}" alt=""></div>{% endif %}
+    <div class="pd-header-text">
+      <span class="name">{{ profile.username }}<span class="age">, {{ profile.age }}</span></span>
+      <span class="town">{{ profile.town }}</span>
+    </div>
+  </div>
+
+  <div class="profile-body" style="padding-top:12px">
+    <div class="pd-stat-row">
+      <div class="pd-stat-tile">
+        <span class="pd-stat-icon">&#128205;</span>
+        <span class="pd-stat-label">Town</span>
+        <strong>{{ profile.town }}</strong>
+      </div>
+      <div class="pd-stat-tile">
+        <span class="pd-stat-icon">&#127874;</span>
+        <span class="pd-stat-label">Age</span>
+        <strong>{{ profile.age }}</strong>
+      </div>
+      <div class="pd-stat-tile">
+        <span class="pd-stat-icon">&#9825;</span>
+        <span class="pd-stat-label">Looking for</span>
+        <strong>{{ profile.get_gender_display }}</strong>
+      </div>
+      {% if profile.interest_labels %}
+        <div class="pd-stat-tile">
+          <span class="pd-stat-icon">&#10024;</span>
+          <span class="pd-stat-label">Into</span>
+          <strong>{{ profile.interest_labels|first }}</strong>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if profile.bio %}
+      <p style="margin-top:16px">{{ profile.bio }}</p>
+    {% endif %}
+
+    {% if profile.interest_labels %}
+      <div class="chip-row">
+        {% for label in profile.interest_labels %}
+          <span class="chip-static">{{ label }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if gallery_photos or is_own_profile %}
+      <div class="section-label" style="margin-top:18px">More photos</div>
+      <div class="pd-gallery-strip">
+        {% for extra_photo in gallery_photos %}
+          <div class="gallery-tile"><img src="{{ extra_photo.url }}" alt="{{ profile.username }}"></div>
+        {% endfor %}
+        {% if is_own_profile and gallery_slots_left %}
+          <a class="gallery-add-tile" href="{% url 'profile_edit' %}">
+            <span class="gallery-add-icon">&#43;</span>
+            <span>Add photo</span>
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if is_own_profile %}
+      <p class="muted" style="margin-top:16px">This is how your profile looks to other members.</p>
+    {% else %}
+
+      <div id="likeActionRow" style="margin-top:18px">
+        {% if my_existing_like == "like" %}
+          <p class="muted">&#10084; You liked {{ profile.username }}.</p>
+        {% elif my_existing_like == "pass" %}
+          <p class="muted">You passed on {{ profile.username }}.</p>
+        {% else %}
+          <div style="display:flex;gap:12px">
+            <button type="button" id="profilePassBtn" class="swipe-btn swipe-btn--pass" aria-label="Pass" style="margin:0;position:static">&#10005;</button>
+            <button type="button" id="profileLikeBtn" class="swipe-btn swipe-btn--like" aria-label="Like" style="margin:0;position:static">&#10084;</button>
+          </div>
+        {% endif %}
+      </div>
+
+      <div style="margin-top:14px">
+        {% if can_message %}
+          <a class="btn-link" href="{% url 'conversation' profile.id %}">Message {{ profile.username }}</a>
+        {% else %}
+          <div class="banner" style="margin-top:4px">
+            <span>Unlock to message {{ profile.username }} and everyone else.</span>
+            <form method="post" action="{% url 'start_payment' %}" style="margin:0">
+              {% csrf_token %}
+              <button type="submit">Unlock R99 (12 months)</button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if not is_own_profile %}
+<div class="match-reveal-backdrop" id="matchReveal">
+  <div class="match-reveal-card">
+    <button type="button" class="match-reveal-close" id="matchRevealClose" aria-label="Close">&times;</button>
+    <div class="mr-cards">
+      <div class="mr-photo mr-photo--left">
+        <img id="mrMyPhoto" src="" alt="">
+        <div class="mr-photo-info"><span id="mrMyName"></span></div>
+      </div>
+      <div class="mr-heart">&#10084;</div>
+      <div class="mr-photo mr-photo--right">
+        <img id="mrTheirPhoto" src="" alt="">
+        <div class="mr-photo-info"><span id="mrTheirName"></span></div>
+      </div>
+    </div>
+    <h2 class="mr-title">You have found your match!</h2>
+    <p class="mr-sub" id="mrSub"></p>
+    <a class="btn-link" id="mrSayHello" href="#">Say hello!</a>
+    <button type="button" class="btn-ghost" id="mrKeepSwiping" style="margin-top:10px">Back to profile</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  function getCookie(name) {
+    const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return match ? decodeURIComponent(match[2]) : null;
+  }
+  const csrftoken = getCookie('csrftoken');
+  const canMessage = {% if can_message %}true{% else %}false{% endif %};
+  const reveal = document.getElementById('matchReveal');
+
+  function showMatchReveal(data, userId) {
+    document.getElementById('mrMyPhoto').src = data.my_photo || '';
+    document.getElementById('mrTheirPhoto').src = data.target_photo || '';
+    document.getElementById('mrMyName').textContent = data.my_username + (data.my_age ? ', ' + data.my_age : '');
+    document.getElementById('mrTheirName').textContent = data.username + (data.target_age ? ', ' + data.target_age : '');
+    document.getElementById('mrSub').textContent = 'You and ' + data.username + ' liked each other.';
+    const helloBtn = document.getElementById('mrSayHello');
+    if (canMessage) {
+      helloBtn.href = '/chat/with/' + userId + '/';
+      helloBtn.textContent = 'Say hello!';
+    } else {
+      helloBtn.href = '/payments/start/';
+      helloBtn.textContent = 'Unlock to say hello';
+    }
+    reveal.classList.add('open');
+  }
+  document.getElementById('matchRevealClose').addEventListener('click', function () { reveal.classList.remove('open'); });
+  document.getElementById('mrKeepSwiping').addEventListener('click', function () { reveal.classList.remove('open'); });
+  reveal.addEventListener('click', function (e) { if (e.target === reveal) reveal.classList.remove('open'); });
+
+  function sendSwipe(action) {
+    const userId = {{ profile.id }};
+    fetch('/swipe/' + userId + '/' + action + '/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken },
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      const row = document.getElementById('likeActionRow');
+      if (action === 'like') {
+        row.innerHTML = '<p class="muted">&#10084; You liked {{ profile.username }}.</p>';
+        if (data && data.match) showMatchReveal(data, userId);
+      } else {
+        row.innerHTML = '<p class="muted">You passed on {{ profile.username }}.</p>';
+      }
+    });
+  }
+
+  const likeBtn = document.getElementById('profileLikeBtn');
+  const passBtn = document.getElementById('profilePassBtn');
+  if (likeBtn) likeBtn.addEventListener('click', function () { sendSwipe('like'); });
+  if (passBtn) passBtn.addEventListener('click', function () { sendSwipe('pass'); });
+})();
+</script>
+{% endif %}
+{% endblock %}
