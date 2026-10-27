@@ -35,6 +35,13 @@ services:
     #   mountPath: /opt/render/project/src/media
     #   sizeGB: 1
     envVars:
+      # Render defaults new Python services to the latest Python
+      # (3.14 at the time of writing) — Pillow doesn't ship a
+      # prebuilt wheel for it yet, so pip tries to compile it from
+      # source and fails. Pin to a version both Django 5.0 and
+      # Pillow 10.3 fully support instead of chasing wheel coverage.
+      - key: PYTHON_VERSION
+        value: "3.12.6"
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
