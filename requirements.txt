@@ -5,3 +5,6 @@ requests==2.32.3
 # Needed only when you deploy to Postgres (e.g. on Render) — not
 # required for local development, which uses SQLite by default.
 psycopg2-binary==2.9.9
+# Needed only in production (Render) — not used by `manage.py runserver`.
+gunicorn==22.0.0
+whitenoise==6.7.0

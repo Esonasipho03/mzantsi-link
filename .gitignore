@@ -4,3 +4,4 @@ __pycache__/
 media/photos/
 db.sqlite3
 venv/
+staticfiles/

@@ -1,0 +1,71 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Deploy: push this repo to GitHub, then on Render choose
+# "New +" -> "Blueprint" and point it at the repo. Render reads this
+# file and provisions the web service + database together, with the
+# env vars below already wired up. You only need to fill in the
+# PAYFAST_* secrets and SECRET_KEY afterwards (marked sync: false,
+# so Render prompts for them instead of storing them in git).
+#
+# Custom domain (mzansi-link.co.za): add it under the web service's
+# Settings -> Custom Domains once the first deploy is live, then add
+# the CNAME/A record Render shows you at your domain registrar. See
+# README.md for the full walkthrough.
+
+databases:
+  - name: mzansi-link-db
+    plan: free
+    databaseName: mzansilink
+    user: mzansilink
+
+services:
+  - type: web
+    name: mzansi-link
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate"
+    startCommand: "gunicorn config.wsgi:application"
+    # A persistent disk so uploaded profile photos (media/) survive
+    # restarts and redeploys — Render's regular filesystem is wiped
+    # on every deploy. Free-tier services can't attach a disk; on
+    # that plan, uploaded photos won't persist across deploys until
+    # you upgrade to a paid instance type and uncomment this.
+    # disk:
+    #   name: mzansi-link-media
+    #   mountPath: /opt/render/project/src/media
+    #   sizeGB: 1
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "0"
+      - key: ALLOWED_HOSTS
+        value: "mzansi-link.co.za,www.mzansi-link.co.za,.onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://mzansi-link.co.za,https://www.mzansi-link.co.za"
+      - key: USE_POSTGRES
+        value: "1"
+      - key: DB_NAME
+        fromDatabase: { name: mzansi-link-db, property: database }
+      - key: DB_USER
+        fromDatabase: { name: mzansi-link-db, property: user }
+      - key: DB_PASSWORD
+        fromDatabase: { name: mzansi-link-db, property: password }
+      - key: DB_HOST
+        fromDatabase: { name: mzansi-link-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: mzansi-link-db, property: port }
+      - key: PAYFAST_MODE
+        value: "live"
+      - key: PAYFAST_MERCHANT_ID
+        sync: false
+      - key: PAYFAST_MERCHANT_KEY
+        sync: false
+      - key: PAYFAST_PASSPHRASE
+        sync: false
+      - key: PAYFAST_RETURN_URL
+        value: "https://mzansi-link.co.za/payments/success/"
+      - key: PAYFAST_CANCEL_URL
+        value: "https://mzansi-link.co.za/payments/cancelled/"
+      - key: PAYFAST_NOTIFY_URL
+        value: "https://mzansi-link.co.za/payments/itn/"

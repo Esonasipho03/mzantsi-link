@@ -24,6 +24,11 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Serves static files directly from gunicorn in production (Render
+    # has no separate nginx/CDN in front by default) — must sit right
+    # after SecurityMiddleware. No-ops locally; `runserver` already
+    # serves static files itself in DEBUG mode.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -85,8 +90,33 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+# `collectstatic` (run automatically by the build command below)
+# gathers everything into here; WhiteNoise then serves straight from
+# this folder in production. Doesn't exist/matter locally.
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# --- Production hardening (no-ops locally, where DEBUG=1) ---
+# Render terminates TLS at its edge and forwards plain HTTP to the
+# app with this header set, so Django needs telling how to recognise
+# an already-HTTPS request instead of redirect-looping forever.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+# Django 4+ requires the scheme here, not just the bare host — without
+# this, a login/signup POST from the real domain is rejected as a
+# cross-origin CSRF attempt. Comma-separated like ALLOWED_HOSTS.
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()
+]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

@@ -13,5 +13,8 @@ urlpatterns = [
     path("payments/", include("payments.urls")),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Always served by Django, not gated to DEBUG — this MVP has no CDN
+# or S3 in front of it (see README's "deliberately left out" list),
+# so Render's persistent disk + this is how uploaded profile photos
+# stay reachable in production too, same as everywhere else.
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
