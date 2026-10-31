@@ -324,8 +324,8 @@ button:active, input[type=submit]:active { transform: translateY(0); }
   aspect-ratio: auto;
   height: calc(100vh - 330px);
   height: calc(100dvh - 330px);
-  min-height: 380px;
-  max-height: 620px;
+  min-height: 580px;
+  max-height: 720px;
 }
 .swipe-card {
   position: absolute;
