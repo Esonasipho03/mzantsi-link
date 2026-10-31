@@ -65,14 +65,31 @@ env vars already wired up.
 7. Once verified, Render issues the HTTPS certificate for it
    automatically — nothing else to configure.
 
-**A disk for uploaded photos**: Render's filesystem is wiped on every
-redeploy, so profile photos uploaded by members won't survive a
-redeploy unless the service has a persistent disk attached. Free-tier
-services can't attach one — if you're on free, uploaded photos will
-be lost on the next deploy (fine for a demo/pilot, not for anything
-with real users). Upgrade the web service to a paid instance type,
-then uncomment the `disk:` block in `render.yaml` and redeploy. A
-longer-term fix (object storage like S3) is out of scope for the MVP.
+**Admin login (no Shell needed)**: in Render's **Environment** tab set
+`ADMIN_USERNAME`, `ADMIN_PASSWORD` (strong and unique) and optionally
+`ADMIN_EMAIL`. The build runs `ensure_admin`, which creates that
+account as staff + superuser; sign in at `/login/` and you land on the
+staff dashboard, where new members are approved. It never overwrites
+an existing password, so changing it in `/admin/` sticks. Locked out?
+Set `ADMIN_RESET_PASSWORD=1` for one deploy, then remove it.
+
+**Demo accounts on the live site** are controlled by one setting:
+`SEED_DEMO_DATA` in Render's **Environment** tab. `1` loads them on
+the next deploy (password `demo1234`, listed above); anything else
+removes them. They all share a public password, so set it to `0` and
+redeploy before real members join. To test as a fresh member, sign up
+normally and approve the account from the staff dashboard.
+
+**Uploaded photos persist**: `MEDIA_IN_DB=1` (set in `render.yaml`)
+stores photos in the database instead of Render's wiped-on-deploy
+disk, and serves them at the usual `/media/...` URLs. Large uploads
+are shrunk to 1600px on the way in. They live and die with the
+database, so the paid-plan upgrade below protects them too.
+
+**Before real members join**: the free Postgres database is deleted
+30 days after creation, so upgrade it to a paid plan first (photos
+and members both live in it). Upgrading the web service as well
+removes the cold-start delay after idle periods.
 
 **ALLOWED_HOSTS / CSRF_TRUSTED_ORIGINS**: `render.yaml` already sets
 these to `mzansi-link.co.za` — if you rename the domain or add

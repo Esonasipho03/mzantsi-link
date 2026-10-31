@@ -94,8 +94,14 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 # gathers everything into here; WhiteNoise then serves straight from
 # this folder in production. Doesn't exist/matter locally.
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# MEDIA_IN_DB=1 (set in render.yaml) keeps uploaded photos in the
+# database so Render's wiped-on-deploy filesystem can't lose them.
+MEDIA_IN_DB = os.getenv("MEDIA_IN_DB", "0") == "1"
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "default": {
+        "BACKEND": "accounts.storage.DatabaseStorage" if MEDIA_IN_DB
+        else "django.core.files.storage.FileSystemStorage"
+    },
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 MEDIA_URL = "/media/"

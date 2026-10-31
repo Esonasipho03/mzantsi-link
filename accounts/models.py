@@ -195,3 +195,16 @@ class Like(models.Model):
         ).exists() and Like.objects.filter(
             from_user=user_b, to_user=user_a, action="like"
         ).exists()
+
+
+class StoredFile(models.Model):
+    """One uploaded file kept in the database (see accounts/storage.py).
+    Only used when MEDIA_IN_DB=1 (production); empty locally."""
+
+    name = models.CharField(max_length=255, unique=True)
+    content = models.BinaryField()
+    content_type = models.CharField(max_length=100, default="application/octet-stream")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name

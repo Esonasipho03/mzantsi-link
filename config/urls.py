@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -13,8 +12,21 @@ urlpatterns = [
     path("payments/", include("payments.urls")),
 ]
 
-# Always served by Django, not gated to DEBUG — this MVP has no CDN
-# or S3 in front of it (see README's "deliberately left out" list),
-# so Render's persistent disk + this is how uploaded profile photos
-# stay reachable in production too, same as everywhere else.
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# NOTE: django.conf.urls.static.static() returns [] when DEBUG is off, so
+# it can't be used to serve uploads in production — hence the explicit
+# re_path + serve view below.
+from django.urls import re_path
+
+_media_prefix = settings.MEDIA_URL.lstrip("/")
+
+if settings.MEDIA_IN_DB:
+    # Production on Render's free plan: photos live in the database
+    # (accounts/storage.py) so redeploys can't wipe them.
+    from accounts.storage import serve_media
+
+    urlpatterns += [re_path(r"^%s(?P<path>.+)$" % _media_prefix, serve_media)]
+else:
+    # Local development, or a host with a real persistent disk.
+    from django.views.static import serve
+
+    urlpatterns += [re_path(r"^%s(?P<path>.*)$" % _media_prefix, serve, {"document_root": settings.MEDIA_ROOT})]
