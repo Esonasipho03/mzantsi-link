@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#E8386A">
+  <title>Offline — Mzansi Link</title>
+  <style>
+    body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+           font-family: system-ui, -apple-system, "Segoe UI", sans-serif; text-align:center; padding:24px;
+           background: linear-gradient(135deg,#FFE3C7,#FFD0DD 40%,#E3D4FF 75%,#C9E7FF); color:#2A1020; }
+    .box { max-width:340px; background:rgba(255,255,255,.75); border-radius:22px; padding:34px 26px;
+           box-shadow:0 14px 34px -12px rgba(120,30,70,.35); }
+    .heart { font-size:44px; color:#E8386A; }
+    h1 { font-size:1.4rem; margin:10px 0 6px; }
+    p { margin:0 0 18px; color:#5b4452; line-height:1.45; }
+    button { font:inherit; font-weight:600; color:#fff; background:#E8386A; border:0; border-radius:999px; padding:12px 26px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="heart">&#10084;</div>
+    <h1>You're offline</h1>
+    <p>Mzansi Link needs a connection to show your matches and chats. Check your data or Wi-Fi and try again.</p>
+    <button type="button" onclick="location.reload()">Try again</button>
+  </div>
+</body>
+</html>

@@ -3,7 +3,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.contrib.auth import views as auth_views
 
+from config import pwa
+
 urlpatterns = [
+    # Installable-app plumbing (manifest, service worker, offline page).
+    # The service worker must live at the site root so it can control every page.
+    path("manifest.webmanifest", pwa.manifest_view, name="pwa_manifest"),
+    path("sw.js", pwa.service_worker_view, name="pwa_sw"),
+    path("offline/", pwa.offline_view, name="pwa_offline"),
     path("admin/", admin.site.urls),
     path("login/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),

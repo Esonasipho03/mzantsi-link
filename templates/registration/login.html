@@ -22,6 +22,7 @@
       <button type="submit">Log in</button>
     </form>
     <p class="muted auth-foot">New here? <a href="{% url 'signup' %}">Create an account</a></p>
+    {% include "partials/install_app.html" %}
   </div>
 </div>
 {% endblock %}

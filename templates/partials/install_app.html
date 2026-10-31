@@ -1,0 +1,11 @@
+{% comment %}
+  "Use Mzansi Link like an app" card. Stays hidden until static/js/pwa.js
+  decides it's useful (e.g. not already installed). To use it on a page,
+  include this partial file from that page's template.
+{% endcomment %}
+<div class="install-card" data-install-card hidden>
+  <strong class="install-title">Use Mzansi Link like an app</strong>
+  <p class="install-text">Add it to your phone's home screen for one-tap access.</p>
+  <button type="button" class="install-btn" data-install-btn>Install on this phone</button>
+  <p class="install-help" data-install-help hidden></p>
+</div>

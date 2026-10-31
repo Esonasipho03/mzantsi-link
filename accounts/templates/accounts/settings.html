@@ -31,6 +31,8 @@
   Notifications and favourites aren't wired up yet in this MVP — nothing is hidden here on purpose, there's just not a working toggle to show yet.
 </p>
 
+{% include "partials/install_app.html" %}
+
 <form action="{% url 'logout' %}" method="post" style="margin-top:4px">
   {% csrf_token %}
   <button type="submit" style="width:100%;background:var(--surface);color:var(--rose-deep);border:1px solid var(--line);box-shadow:none">Log out</button>

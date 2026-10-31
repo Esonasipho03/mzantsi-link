@@ -10,6 +10,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
   <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+  <link rel="manifest" href="{% url 'pwa_manifest' %}">
+  <meta name="theme-color" content="#E8386A">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mzansi Link">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="stylesheet" href="{% static_v 'css/style.css' %}">
   <script>
     // Applied before paint so there's no flash of the wrong theme.
@@ -67,6 +73,7 @@
     </a>
   </nav>
   {% endif %}
+  <script src="{% static 'js/pwa.js' %}" defer></script>
   <script>
     (function () {
       var btn = document.getElementById('themeToggleBtn');

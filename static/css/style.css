@@ -1354,3 +1354,21 @@ body.chat-open .container { margin: 0; padding: 0; max-width: none; }
      the top instead of centering through the fold. */
   .auth-card--wide { justify-content: flex-start; padding-top: 28px; }
 }
+
+
+/* ---------- "Install on this phone" card (partials/install_app.html) ---------- */
+.install-card {
+  margin-top: 18px; padding: 14px 16px; text-align: left;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 16px;
+}
+.install-card[hidden] { display: none; }
+.install-title { display: block; font-size: 0.92rem; color: var(--ink); }
+.install-text { margin: 4px 0 12px; font-size: 0.85rem; color: var(--muted); }
+.auth-card .install-card .install-btn,
+.install-card .install-btn {
+  width: 100%; margin: 0; padding: 11px 16px; border-radius: 999px;
+  background: transparent; color: var(--ink); border: 1.5px solid var(--ink);
+  box-shadow: none; font-weight: 600; cursor: pointer;
+}
+.install-help { margin: 12px 0 0; font-size: 0.84rem; line-height: 1.45; color: var(--muted); }
+.install-help[hidden] { display: none; }
