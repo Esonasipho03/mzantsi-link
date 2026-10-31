@@ -145,13 +145,28 @@ header a.brand {
 }
 @media (max-width: 420px) {
   header a.brand { font-size: 17px; }
-  header .btn-link { padding: 10px 14px !important; font-size: 13px; }
+  header .btn-link { padding: 9px 12px !important; font-size: 13px; white-space: nowrap; }
+  header a.brand { gap: 5px; }
+  header a.brand .brand-mark { height: 25px; }
 }
-header a.brand::before {
-  content: "♥";
-  color: var(--rose);
-  font-size: 18px;
+header .btn-link { white-space: nowrap; }
+/* Very narrow phones (360px and under): trim a little more so the
+   logo, theme toggle and both buttons still fit on one line. */
+@media (max-width: 380px) {
+  header a.brand { font-size: 15px; }
+  header a.brand .brand-mark { height: 22px; }
+  header .btn-link { padding: 9px 10px !important; font-size: 12.5px; }
 }
+/* Tiny screens (320-340px, e.g. older iPhone SE): just the mark. */
+@media (max-width: 340px) {
+  header a.brand .brand-name { display: none; }
+  header a.brand .brand-mark { height: 28px; }
+}
+/* The logo's heart-and-couple mark, then the name in the logo's two
+   colours (ink + rose) so the header reads as the same brand. */
+header a.brand .brand-mark { height: 31px; width: auto; display: block; }
+header a.brand .brand-name { letter-spacing: 0.01em; }
+header a.brand .brand-name-accent { color: var(--rose); }
 
 .container { max-width: 720px; margin: 14px auto; padding: 0 14px 90px; }
 
@@ -324,8 +339,8 @@ button:active, input[type=submit]:active { transform: translateY(0); }
   aspect-ratio: auto;
   height: calc(100vh - 330px);
   height: calc(100dvh - 330px);
-  min-height: 580px;
-  max-height: 720px;
+  min-height: 380px;
+  max-height: 620px;
 }
 .swipe-card {
   position: absolute;
@@ -1289,6 +1304,19 @@ body.chat-open .container { margin: 0; padding: 0; max-width: none; }
 /* Signup's form is a lot longer than login's — a bit wider on
    desktop so fields don't feel cramped. */
 .auth-card--wide { max-width: 440px; }
+/* Full logo on the sign-in / sign-up cards. The wordmark is black, so
+   in dark mode it sits on a white rounded badge instead of vanishing. */
+.auth-logo {
+  display: block; width: 190px; max-width: 70%; height: auto; margin: 0 auto 10px;
+}
+:root[data-theme="dark"] .auth-logo {
+  background: #fff; border-radius: 18px; padding: 12px 16px; box-sizing: content-box;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .auth-logo {
+    background: #fff; border-radius: 18px; padding: 12px 16px; box-sizing: content-box;
+  }
+}
 .auth-avatar {
   display: inline-flex; align-items: center; justify-content: center;
   width: 52px; height: 52px; border-radius: 50%; margin-bottom: 14px;

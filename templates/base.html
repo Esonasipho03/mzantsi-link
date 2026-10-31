@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
   <link rel="stylesheet" href="{% static_v 'css/style.css' %}">
   <script>
     // Applied before paint so there's no flash of the wrong theme.
@@ -23,7 +25,10 @@
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <header>
-    <a class="brand" href="{% url 'home' %}">Mzansi Link</a>
+    <a class="brand" href="{% url 'home' %}" aria-label="Mzansi Link home">
+      <img class="brand-mark" src="{% static 'img/logo-mark.png' %}" alt="" width="36" height="31">
+      <span class="brand-name">Mzansi <span class="brand-name-accent">Link</span></span>
+    </a>
     <div style="display:flex;align-items:center;gap:8px">
       {% if user.is_authenticated and user.is_staff %}
         <a href="{% url 'staff_dashboard' %}" class="icon-btn" aria-label="Admin dashboard" style="text-decoration:none">&#128737;</a>
