@@ -1,7 +1,9 @@
 import uuid
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -55,6 +57,16 @@ def payfast_itn_view(request):
         payment = Payment.objects.get(m_payment_id=data.get("m_payment_id"))
     except Payment.DoesNotExist:
         return HttpResponse(status=404)
+
+    # Real-money safety: the signed message must be for OUR merchant and
+    # for the full price we asked for, so a cheaper or foreign payment
+    # can never unlock an account.
+    try:
+        paid = Decimal(data.get("amount_gross", "0"))
+    except InvalidOperation:
+        paid = Decimal("0")
+    if data.get("merchant_id") != str(settings.PAYFAST_MERCHANT_ID) or paid != Decimal(payment.amount):
+        return HttpResponse(status=400)
 
     payment.pf_payment_id = data.get("pf_payment_id", "")
 

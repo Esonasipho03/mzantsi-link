@@ -74,20 +74,20 @@ services:
         sync: false
       - key: ADMIN_EMAIL
         sync: false
-      # --- PayFast: SANDBOX (fake money) while testing ---
-      # These are PayFast's public sandbox credentials (same ones in
-      # .env.example), so they're safe in git. No passphrase on this
-      # sandbox merchant, so PAYFAST_PASSPHRASE is deliberately not set.
-      # TO GO LIVE: change PAYFAST_MODE to "live", and replace the two
-      # values below with `sync: false` so the real merchant ID/key are
-      # typed into Render's Environment tab instead of stored in git; add
-      # PAYFAST_PASSPHRASE the same way (required for live).
+      # --- PayFast: credentials live in Render's Environment tab ---
+      # Set PAYFAST_MODE (sandbox or live), PAYFAST_MERCHANT_ID,
+      # PAYFAST_MERCHANT_KEY and PAYFAST_PASSPHRASE there (never in git).
+      # Sandbox test values: mode sandbox, merchant 10000100, key
+      # 46f0cd694581a, passphrase empty. Live needs Mohale's own details
+      # and the passphrase set in his PayFast account (Settings > Integration).
       - key: PAYFAST_MODE
-        value: "sandbox"
+        sync: false
       - key: PAYFAST_MERCHANT_ID
-        value: "10000100"
+        sync: false
       - key: PAYFAST_MERCHANT_KEY
-        value: "46f0cd694581a"
+        sync: false
+      - key: PAYFAST_PASSPHRASE
+        sync: false
       - key: PAYFAST_RETURN_URL
         value: "https://mzansi-link.co.za/payments/success/"
       - key: PAYFAST_CANCEL_URL
