@@ -264,6 +264,8 @@ def profile_edit_view(request):
             user.interests = ",".join(form.cleaned_data["interests"])
             if user.gender == "woman":  # only women's choice has any effect
                 user.looking_for = form.cleaned_data["looking_for"] or user.looking_for
+            if user.gender in ("lgbtq", "other"):  # only LGBTQ+ members' choice has any effect
+                user.interested_in = form.cleaned_data["interested_in"] or user.interested_in
             new_photo = form.cleaned_data.get("photo")
             if new_photo:
                 user.photo = new_photo
@@ -273,7 +275,7 @@ def profile_edit_view(request):
                 user.save()
             return redirect("my_profile")
     else:
-        form = ProfileEditForm(initial={"bio": user.bio, "interests": user.interest_list(), "looking_for": user.looking_for})
+        form = ProfileEditForm(initial={"bio": user.bio, "interests": user.interest_list(), "looking_for": user.looking_for, "interested_in": user.interested_in})
 
     return render(request, "accounts/profile_edit.html", {
         "form": form,

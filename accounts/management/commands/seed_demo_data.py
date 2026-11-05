@@ -136,6 +136,8 @@ LGBTQ = [
 ]
 
 # Women who chose "Friendship" (also visible to LGBTQ+ members).
+# Who each LGBTQ+ demo member is interested in (default "both").
+INTERESTED_IN = {"zodwa_q": "men"}  # sees only LGBTQ+ members; the others see Friendship women too
 FRIENDSHIP_WOMEN = {"zanele_w", "buhle_w"}
 
 
@@ -207,8 +209,10 @@ class Command(BaseCommand):
             if existing:
                 # Keep the friendship setting right on accounts made before it existed.
                 wanted = "friendship" if username in FRIENDSHIP_WOMEN else "dating"
-                if existing.looking_for != wanted:
+                want_in = INTERESTED_IN.get(username, "both")
+                if existing.looking_for != wanted or existing.interested_in != want_in:
                     existing.looking_for = wanted
+                    existing.interested_in = want_in
                     existing.save()
                 self.stdout.write(f"Skipping {username} (already exists).")
                 continue
@@ -219,6 +223,7 @@ class Command(BaseCommand):
                 age=age, gender=gender, town=town,
                 is_approved=approved, is_unlocked=unlocked,
                 looking_for="friendship" if username in FRIENDSHIP_WOMEN else "dating",
+                interested_in=INTERESTED_IN.get(username, "both"),
                 bio=bio, interests=",".join(interests),
             )
             user.set_password(DEMO_PASSWORD)
@@ -314,5 +319,5 @@ class Command(BaseCommand):
             "Who sees whom: men <-> women. LGBTQ+ members (_q) only see each other, plus women who chose\n"
             "  Friendship (zanele_w, buhle_w):\n"
             "  lindo_q   — paid LGBTQ+ member: match with zodwa_q, sees zanele_w and buhle_w but no men\n"
-            "  zodwa_q   — free LGBTQ+ member;  kabelo_q — LGBTQ+ member not yet approved"
+            "  zodwa_q   — free LGBTQ+ member interested in Men: sees only LGBTQ+ members;  kabelo_q — LGBTQ+ member not yet approved"
         ))

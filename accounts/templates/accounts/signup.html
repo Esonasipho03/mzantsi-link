@@ -48,6 +48,13 @@
         {{ form.looking_for.errors }}
       </div>
 
+      <div id="interestedInBlock" hidden>
+        <label>Interested in</label>
+        {{ form.interested_in }}
+        <span class="muted" style="font-size:13px">Men keeps you with LGBTQ+ members only. Women or Both also shows you women who chose Friendship.</span>
+        {{ form.interested_in.errors }}
+      </div>
+
       <label for="{{ form.town.id_for_label }}">Your town</label>
       {{ form.town }}
       <span class="muted" style="font-size:13px">Any town in South Africa</span>
@@ -60,13 +67,15 @@
       <button type="submit">Create account</button>
     </form>
     <script>
-      // "Looking for" only matters for women, so only show it then.
+      // "Looking for" only matters for women; "Interested in" only for LGBTQ+/Other.
       (function () {
         var block = document.getElementById('lookingForBlock');
         var radios = document.querySelectorAll('input[name="gender"]');
         function sync() {
           var picked = document.querySelector('input[name="gender"]:checked');
           block.hidden = !(picked && picked.value === 'woman');
+          document.getElementById('interestedInBlock').hidden =
+            !(picked && (picked.value === 'lgbtq' || picked.value === 'other'));
         }
         Array.prototype.forEach.call(radios, function (r) { r.addEventListener('change', sync); });
         sync();

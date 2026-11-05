@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.conf import settings
-from .models import INTEREST_CHOICES, LOOKING_FOR_CHOICES, User
+from .models import INTEREST_CHOICES, INTERESTED_IN_CHOICES, LOOKING_FOR_CHOICES, User
 
 
 class SignupForm(UserCreationForm):
@@ -14,10 +14,11 @@ class SignupForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ["username", "email", "age", "gender", "looking_for", "town", "photo"]
+        fields = ["username", "email", "age", "gender", "looking_for", "interested_in", "town", "photo"]
         widgets = {
             "gender": forms.RadioSelect,
             "looking_for": forms.RadioSelect,
+            "interested_in": forms.RadioSelect,
             "town": forms.TextInput(attrs={"placeholder": "e.g. Duduza, Polokwane, Durban..."}),
         }
 
@@ -35,6 +36,9 @@ class SignupForm(UserCreationForm):
         # seen by LGBTQ+ members), so for everyone else it stays "dating".
         if cleaned.get("gender") != "woman":
             cleaned["looking_for"] = "dating"
+        # "Interested in" is only asked of LGBTQ+ / Other members.
+        if cleaned.get("gender") not in ("lgbtq", "other") or not cleaned.get("interested_in"):
+            cleaned["interested_in"] = "both"
         return cleaned
 
     def save(self, commit=True):
@@ -65,4 +69,8 @@ class ProfileEditForm(forms.Form):
     looking_for = forms.ChoiceField(
         choices=LOOKING_FOR_CHOICES, required=False, widget=forms.RadioSelect,
         label="Looking for",
+    )
+    interested_in = forms.ChoiceField(
+        choices=INTERESTED_IN_CHOICES, required=False, widget=forms.RadioSelect,
+        label="Interested in",
     )

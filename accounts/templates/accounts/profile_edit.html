@@ -38,6 +38,13 @@
     {{ form.looking_for.errors }}
     {% endif %}
 
+    {% if profile.gender == "lgbtq" or profile.gender == "other" %}
+    <label>Interested in</label>
+    {{ form.interested_in }}
+    <span class="muted" style="font-size:13px">Men keeps you with LGBTQ+ members only. Women or Both also shows you women who chose Friendship.</span>
+    {{ form.interested_in.errors }}
+    {% endif %}
+
     <label for="{{ form.bio.id_for_label }}">About me</label>
     {{ form.bio }}
     <span class="muted" style="font-size:13px">{{ form.bio.help_text }}</span>

@@ -26,6 +26,15 @@ LOOKING_FOR_CHOICES = [
     ("friendship", "Friendship"),
 ]
 
+# Only asked of LGBTQ+ / Other members: who they are interested in. See
+# accounts/visibility.py — it decides whether they also see (and are seen
+# by) women who chose Friendship.
+INTERESTED_IN_CHOICES = [
+    ("men", "Men"),
+    ("women", "Women"),
+    ("both", "Both"),
+]
+
 # Fixed interest tags for the profile editor — a plain CharField of
 # comma-separated slugs rather than a separate model+M2M, in keeping
 # with how small the rest of this MVP's data model is.
@@ -75,6 +84,10 @@ class User(AbstractUser):
     # seen by (and see) LGBTQ+ members, on top of men. Everyone else's
     # value changes nothing — see accounts/visibility.py.
     looking_for = models.CharField(max_length=10, choices=LOOKING_FOR_CHOICES, default="dating")
+
+    # Only matters for LGBTQ+ / Other members: "men" keeps them to their
+    # own group; "women" or "both" also lets them see Friendship women.
+    interested_in = models.CharField(max_length=5, choices=INTERESTED_IN_CHOICES, default="both")
 
     photo = models.ImageField(upload_to="photos/original/", blank=True, null=True)
     photo_blurred = models.ImageField(upload_to="photos/blurred/", blank=True, null=True)

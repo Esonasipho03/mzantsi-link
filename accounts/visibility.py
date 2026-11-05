@@ -6,7 +6,10 @@ The rule, from the client:
   * LGBTQ+ members (gender "lgbtq" or "other") see only each other, so
     nobody in that group can start texting straight members.
   * Exception: a woman who is open to friendship (looking_for =
-    "friendship") is also visible to LGBTQ+ members, and sees them.
+    "friendship") is also visible to LGBTQ+ members, and sees them,
+    but only those LGBTQ+ members who said they are interested in
+    women or both (interested_in = "women" / "both"). An LGBTQ+ member
+    who picked "men" sees only their own group.
   * Staff see everyone (so the admin can preview the site).
 
 It is symmetric by design — if A can see B then B can see A — so a chat
@@ -41,9 +44,11 @@ def visible_to(viewer, include_self=False):
     elif viewer.gender == "woman":
         rules = [Q(gender="man")]
         if viewer.looking_for == "friendship":
-            rules.append(Q(gender__in=LGBTQ_GROUP))
+            rules.append(Q(gender__in=LGBTQ_GROUP, interested_in__in=("women", "both")))
     elif viewer.gender in LGBTQ_GROUP:
-        rules = [Q(gender__in=LGBTQ_GROUP), Q(gender="woman", looking_for="friendship")]
+        rules = [Q(gender__in=LGBTQ_GROUP)]
+        if viewer.interested_in in ("women", "both"):
+            rules.append(Q(gender="woman", looking_for="friendship"))
     else:
         return members.none()  # no gender on file: see nobody
 
