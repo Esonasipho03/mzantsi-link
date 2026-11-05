@@ -10,8 +10,9 @@ from urllib.parse import urlencode, quote_plus
 from django.conf import settings
 
 
-def _signature(data: dict, passphrase: str = "") -> str:
-    pairs = [f"{k}={quote_plus(str(v))}" for k, v in data.items() if v not in (None, "")]
+def _signature(data: dict, passphrase: str = "", skip_blank: bool = True) -> str:
+    pairs = [f"{k}={quote_plus(str(v))}" for k, v in data.items()
+             if not (skip_blank and v in (None, ""))]
     param_string = "&".join(pairs)
     if passphrase:
         param_string += f"&passphrase={quote_plus(passphrase)}"
@@ -46,5 +47,11 @@ def payment_redirect_url(fields: dict) -> str:
 def itn_signature_valid(post_data: dict) -> bool:
     data = post_data.copy()
     received_signature = data.pop("signature", "")
-    expected_signature = _signature(data, settings.PAYFAST_PASSPHRASE)
-    return received_signature == expected_signature
+    # PayFast's confirmation (ITN) includes blank fields (name_last=,
+    # custom_str1= ...) in the text it signs, while the outgoing payment
+    # link leaves blanks out. Accept either form so a real confirmation
+    # is never rejected for that reason.
+    return received_signature in (
+        _signature(data, settings.PAYFAST_PASSPHRASE, skip_blank=False),
+        _signature(data, settings.PAYFAST_PASSPHRASE, skip_blank=True),
+    )
