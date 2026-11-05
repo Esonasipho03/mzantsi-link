@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.conf import settings
-from .models import INTEREST_CHOICES, User
+from .models import INTEREST_CHOICES, LOOKING_FOR_CHOICES, User
 
 
 class SignupForm(UserCreationForm):
@@ -14,9 +14,10 @@ class SignupForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ["username", "email", "age", "gender", "town", "photo"]
+        fields = ["username", "email", "age", "gender", "looking_for", "town", "photo"]
         widgets = {
             "gender": forms.RadioSelect,
+            "looking_for": forms.RadioSelect,
             "town": forms.TextInput(attrs={"placeholder": "e.g. Duduza, Polokwane, Durban..."}),
         }
 
@@ -27,6 +28,14 @@ class SignupForm(UserCreationForm):
                 f"You must be {settings.MINIMUM_AGE} or older to join Mzansi Link."
             )
         return age
+
+    def clean(self):
+        cleaned = super().clean()
+        # "Looking for" only has an effect for women (it lets them also be
+        # seen by LGBTQ+ members), so for everyone else it stays "dating".
+        if cleaned.get("gender") != "woman":
+            cleaned["looking_for"] = "dating"
+        return cleaned
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -53,3 +62,7 @@ class ProfileEditForm(forms.Form):
         choices=INTEREST_CHOICES, required=False, widget=forms.CheckboxSelectMultiple,
     )
     photo = forms.ImageField(required=False, help_text="Leave blank to keep your current photo.")
+    looking_for = forms.ChoiceField(
+        choices=LOOKING_FOR_CHOICES, required=False, widget=forms.RadioSelect,
+        label="Looking for",
+    )

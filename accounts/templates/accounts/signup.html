@@ -41,6 +41,13 @@
       {{ form.gender }}
       {{ form.gender.errors }}
 
+      <div id="lookingForBlock" hidden>
+        <label>Looking for</label>
+        {{ form.looking_for }}
+        <span class="muted" style="font-size:13px">Choosing Friendship also lets LGBTQ+ members see your profile.</span>
+        {{ form.looking_for.errors }}
+      </div>
+
       <label for="{{ form.town.id_for_label }}">Your town</label>
       {{ form.town }}
       <span class="muted" style="font-size:13px">Any town in South Africa</span>
@@ -52,6 +59,19 @@
 
       <button type="submit">Create account</button>
     </form>
+    <script>
+      // "Looking for" only matters for women, so only show it then.
+      (function () {
+        var block = document.getElementById('lookingForBlock');
+        var radios = document.querySelectorAll('input[name="gender"]');
+        function sync() {
+          var picked = document.querySelector('input[name="gender"]:checked');
+          block.hidden = !(picked && picked.value === 'woman');
+        }
+        Array.prototype.forEach.call(radios, function (r) { r.addEventListener('change', sync); });
+        sync();
+      })();
+    </script>
     <p class="muted auth-foot">Already a member? <a href="{% url 'login' %}">Log in</a></p>
   </div>
 </div>

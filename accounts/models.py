@@ -17,6 +17,15 @@ GENDER_CHOICES = [
 # unlock clear photos and chat — see User.has_active_unlock().
 FREE_GENDERS = ("woman",)
 
+# LGBTQ+ members ("lgbtq" and "other") only see each other — see
+# accounts/visibility.py for the full who-sees-whom rule.
+LGBTQ_GROUP = ("lgbtq", "other")
+
+LOOKING_FOR_CHOICES = [
+    ("dating", "Dating"),
+    ("friendship", "Friendship"),
+]
+
 # Fixed interest tags for the profile editor — a plain CharField of
 # comma-separated slugs rather than a separate model+M2M, in keeping
 # with how small the rest of this MVP's data model is.
@@ -61,6 +70,11 @@ class User(AbstractUser):
     # Free text, not limited to one region — a member can be anywhere
     # in South Africa (previously a fixed Ekurhuleni-towns dropdown).
     town = models.CharField(max_length=60, blank=True)
+
+    # Only matters for women: a woman who picks "friendship" can also be
+    # seen by (and see) LGBTQ+ members, on top of men. Everyone else's
+    # value changes nothing — see accounts/visibility.py.
+    looking_for = models.CharField(max_length=10, choices=LOOKING_FOR_CHOICES, default="dating")
 
     photo = models.ImageField(upload_to="photos/original/", blank=True, null=True)
     photo_blurred = models.ImageField(upload_to="photos/blurred/", blank=True, null=True)

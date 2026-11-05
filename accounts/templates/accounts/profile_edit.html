@@ -31,6 +31,13 @@
     <span class="muted" style="font-size:13px">{{ form.photo.help_text }}</span>
     {{ form.photo.errors }}
 
+    {% if profile.gender == "woman" %}
+    <label>Looking for</label>
+    {{ form.looking_for }}
+    <span class="muted" style="font-size:13px">Choosing Friendship also lets LGBTQ+ members see your profile.</span>
+    {{ form.looking_for.errors }}
+    {% endif %}
+
     <label for="{{ form.bio.id_for_label }}">About me</label>
     {{ form.bio }}
     <span class="muted" style="font-size:13px">{{ form.bio.help_text }}</span>

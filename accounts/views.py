@@ -11,6 +11,7 @@ from django.contrib import messages
 
 from .forms import ProfileEditForm, SignupForm
 from .models import Like, ProfilePhoto, User
+from .visibility import visible_to
 
 # Gate for the custom staff dashboard — reuses the normal login + the
 # is_staff flag every Django superuser already has, rather than a
@@ -72,7 +73,8 @@ def landing_view(request):
 
     # "Near you tonight" teaser strip — real approved members, most
     # recent first, photo blurred (AnonymousUser is never "unlocked").
-    preview_profiles = list(members.order_by("-date_joined")[:6])
+    # Men and women only: LGBTQ+ members are never shown to the public.
+    preview_profiles = list(members.exclude(gender__in=("lgbtq", "other")).order_by("-date_joined")[:6])
     for profile in preview_profiles:
         profile.photo_for_user = profile.photo_for(request.user)
 
@@ -93,7 +95,8 @@ def home_view(request):
 
     # Point 3: approved members only, excluding the viewer — unapproved
     # sign-ups never appear to others.
-    profiles = list(User.objects.filter(is_approved=True).exclude(id=request.user.id))
+    # visible_to() applies the who-sees-whom rule (accounts/visibility.py).
+    profiles = list(visible_to(request.user).exclude(id=request.user.id))
 
     # Optional filters from the filter sheet (age range + town). Both are
     # real fields on User, so these narrow the actual query — there's no
@@ -147,7 +150,7 @@ def swipe_view(request, user_id, action):
     if action not in ("like", "pass"):
         return JsonResponse({"error": "invalid action"}, status=400)
 
-    target = get_object_or_404(User, pk=user_id, is_approved=True)
+    target = get_object_or_404(visible_to(request.user), pk=user_id)
     like, _ = Like.objects.update_or_create(
         from_user=request.user, to_user=target, defaults={"action": action}
     )
@@ -181,7 +184,7 @@ def likes_view(request):
     liker_ids = Like.objects.filter(to_user=request.user, action="like").values_list(
         "from_user_id", flat=True
     )
-    likers = list(User.objects.filter(id__in=liker_ids, is_approved=True))
+    likers = list(visible_to(request.user).filter(id__in=liker_ids))
     my_likes = set(
         Like.objects.filter(from_user=request.user, action="like").values_list("to_user_id", flat=True)
     )
@@ -210,7 +213,7 @@ def profile_detail_view(request, user_id):
     into a chat. Shows the photo (blur rule still applies), bio and
     interests, whether they've already liked the viewer, and lets the
     viewer like/pass right here instead of only from the Discover stack."""
-    profile = get_object_or_404(User, pk=user_id, is_approved=True)
+    profile = get_object_or_404(visible_to(request.user, include_self=True), pk=user_id)
     is_own_profile = profile.id == request.user.id
 
     can_message = request.user.has_active_unlock()
@@ -259,6 +262,8 @@ def profile_edit_view(request):
         if form.is_valid():
             user.bio = form.cleaned_data["bio"]
             user.interests = ",".join(form.cleaned_data["interests"])
+            if user.gender == "woman":  # only women's choice has any effect
+                user.looking_for = form.cleaned_data["looking_for"] or user.looking_for
             new_photo = form.cleaned_data.get("photo")
             if new_photo:
                 user.photo = new_photo
@@ -268,7 +273,7 @@ def profile_edit_view(request):
                 user.save()
             return redirect("my_profile")
     else:
-        form = ProfileEditForm(initial={"bio": user.bio, "interests": user.interest_list()})
+        form = ProfileEditForm(initial={"bio": user.bio, "interests": user.interest_list(), "looking_for": user.looking_for})
 
     return render(request, "accounts/profile_edit.html", {
         "form": form,

@@ -11,14 +11,14 @@ every deploy; does nothing once they're gone.
 from django.core.management.base import BaseCommand
 
 from accounts.models import User
-from accounts.management.commands.seed_demo_data import MEN, WOMEN
+from accounts.management.commands.seed_demo_data import LGBTQ, MEN, WOMEN
 
 
 class Command(BaseCommand):
     help = "Remove the seeded demo accounts (exact usernames only)."
 
     def handle(self, *args, **options):
-        usernames = [row[0] for row in WOMEN + MEN]
+        usernames = [row[0] for row in WOMEN + MEN + LGBTQ]
         users = User.objects.filter(username__in=usernames, is_staff=False)
         # Delete their stored photo files too, so removed demo accounts
         # don't leave orphaned images behind (matters when photos live in

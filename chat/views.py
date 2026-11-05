@@ -4,6 +4,7 @@ from django.db.models import Q, Max
 from django.shortcuts import render, redirect, get_object_or_404
 
 from accounts.models import User
+from accounts.visibility import visible_to
 from .models import Message
 from .forms import MessageForm
 
@@ -19,7 +20,7 @@ def _conversations_for(me):
     other_ids = {uid for pair in partner_ids for uid in pair if uid != me.id}
 
     conversations = []
-    for other in User.objects.filter(id__in=other_ids):
+    for other in visible_to(me).filter(id__in=other_ids):
         last = Message.objects.filter(
             Q(sender=me, recipient=other) | Q(sender=other, recipient=me)
         ).order_by("-created_at").first()
@@ -47,8 +48,9 @@ def conversation_view(request, user_id):
     Access rule: a man can only chat once he is unlocked. Point 3 of
     the brief ("chat only if guy is paid") is enforced here.
     """
-    other = get_object_or_404(User, pk=user_id)
     me = request.user
+    # Only people the viewer is allowed to see can be chatted with.
+    other = get_object_or_404(visible_to(me), pk=user_id)
     other.photo_for_user = other.photo_for(me)
 
     if me.gender == "man" and not me.is_unlocked:

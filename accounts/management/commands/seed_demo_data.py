@@ -121,6 +121,24 @@ def _draw_hair(draw, style, cx, head_top, head_bottom, head_left, head_right, co
         draw.pieslice([head_left - 4, head_top - 20, head_right + 4, head_top + 70], 180, 360, fill=color)
 
 
+# LGBTQ+ demo members (usernames end in _q). They only see each other, plus
+# women who chose "friendship" — see accounts/visibility.py.
+LGBTQ = [
+    ("lindo_q", 27, "Springs", True, True,
+     "Coffee, thrift shops and long drives. Here to meet people who get it.",
+     ["music", "fashion", "travel"]),
+    ("zodwa_q", 29, "Benoni", True, False,
+     "Gym in the morning, Netflix at night. Looking for good company.",
+     ["sports", "movies"]),
+    ("kabelo_q", 31, "Boksburg", False, False,
+     "New here and waiting on approval.",
+     ["art", "photography"]),
+]
+
+# Women who chose "Friendship" (also visible to LGBTQ+ members).
+FRIENDSHIP_WOMEN = {"zanele_w", "buhle_w"}
+
+
 def make_avatar_photo(seed_text: str) -> ContentFile:
     """A simple flat-icon style bust avatar: background, head, hair,
     shoulders — enough to tell demo profiles apart at a glance without
@@ -179,20 +197,28 @@ class Command(BaseCommand):
         if options["reset"]:
             d1, _ = User.objects.filter(username__endswith="_w").delete()
             d2, _ = User.objects.filter(username__endswith="_m").delete()
-            self.stdout.write(f"Removed {d1 + d2} existing demo accounts.")
+            d3, _ = User.objects.filter(username__endswith="_q").delete()
+            self.stdout.write(f"Removed {d1 + d2 + d3} existing demo accounts.")
 
         created = []
 
-        for username, age, town, approved, unlocked, bio, interests in WOMEN + MEN:
-            if User.objects.filter(username=username).exists():
+        for username, age, town, approved, unlocked, bio, interests in WOMEN + MEN + LGBTQ:
+            existing = User.objects.filter(username=username).first()
+            if existing:
+                # Keep the friendship setting right on accounts made before it existed.
+                wanted = "friendship" if username in FRIENDSHIP_WOMEN else "dating"
+                if existing.looking_for != wanted:
+                    existing.looking_for = wanted
+                    existing.save()
                 self.stdout.write(f"Skipping {username} (already exists).")
                 continue
 
-            gender = "woman" if username.endswith("_w") else "man"
+            gender = {"w": "woman", "m": "man", "q": "lgbtq"}[username[-1]]
             user = User(
                 username=username, email=f"{username}@example.com",
                 age=age, gender=gender, town=town,
                 is_approved=approved, is_unlocked=unlocked,
+                looking_for="friendship" if username in FRIENDSHIP_WOMEN else "dating",
                 bio=bio, interests=",".join(interests),
             )
             user.set_password(DEMO_PASSWORD)
@@ -254,7 +280,10 @@ class Command(BaseCommand):
             ("naledi_w", "sipho_m", "like"),   # one-way -> "Liked you" badge on sipho's profile
             ("zanele_w", "mandla_m", "like"),  # one-way
             ("refilwe_w", "lwazi_m", "like"),  # one-way
-            ("mandla_m", "themba_m", "pass"),  # a plain pass, for completeness
+            ("mandla_m", "thando_w", "pass"),  # a plain pass, for completeness
+            ("lindo_q", "zodwa_q", "like"),    # LGBTQ+ pair -> match
+            ("zodwa_q", "lindo_q", "like"),
+            ("zanele_w", "lindo_q", "like"),   # friendship woman -> LGBTQ+ member, one-way
         ]
         likes_created = 0
         for from_username, to_username, action in like_pairs:
@@ -281,5 +310,9 @@ class Command(BaseCommand):
             "  ayanda_w — not yet approved (but unlocked, since women always are), for the waiting screen\n"
             "  kagiso_m / sibusiso_m / tumelo_m — not yet approved AND locked (no active unlock),\n"
             "              for testing the pending + paywall states together\n"
-            "              (there's no 'locked woman' account — women are always unlocked by design)"
+            "              (there's no 'locked woman' account — women are always unlocked by design)\n"
+            "Who sees whom: men <-> women. LGBTQ+ members (_q) only see each other, plus women who chose\n"
+            "  Friendship (zanele_w, buhle_w):\n"
+            "  lindo_q   — paid LGBTQ+ member: match with zodwa_q, sees zanele_w and buhle_w but no men\n"
+            "  zodwa_q   — free LGBTQ+ member;  kabelo_q — LGBTQ+ member not yet approved"
         ))
