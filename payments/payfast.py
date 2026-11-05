@@ -29,14 +29,18 @@ def build_payment_fields(user, m_payment_id: str) -> dict:
         "email_address": user.email,
         "m_payment_id": m_payment_id,
         "amount": settings.UNLOCK_PRICE_ZAR,
-        "item_name": "Mzansi Link — unlock (12 months)",
+        "item_name": "Mzansi Link unlock 12 months",
     }
     data["signature"] = _signature(data, settings.PAYFAST_PASSPHRASE)
     return data
 
 
 def payment_redirect_url(fields: dict) -> str:
-    return f"https://{settings.PAYFAST_HOST}/eng/process?{urlencode(fields)}"
+    # Blank fields (e.g. a member with no email) are left out entirely:
+    # PayFast rejects "email_address=" with a 400, and the signature
+    # already ignores blanks, so dropping them keeps both in step.
+    sent = {k: v for k, v in fields.items() if v not in (None, "")}
+    return f"https://{settings.PAYFAST_HOST}/eng/process?{urlencode(sent)}"
 
 
 def itn_signature_valid(post_data: dict) -> bool:
