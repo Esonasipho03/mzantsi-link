@@ -6,7 +6,7 @@
   <div class="section-label">Chats</div>
 </div>
 
-<div class="inbox-list">
+<div class="inbox-list" id="inboxList">
   {% for other, last in conversations %}
     <a class="inbox-row" href="{% url 'conversation' other.id %}">
       {% if other.photo_for_user %}
@@ -32,4 +32,27 @@
     </div>
   {% endfor %}
 </div>
+<script>
+  // Keep the chat list fresh (new messages, new conversations) without a reload.
+  (function () {
+    var list = document.getElementById('inboxList');
+    if (!list || !window.fetch) { return; }
+    var busy = false;
+    function refresh() {
+      if (busy || document.hidden) { return; }
+      busy = true;
+      fetch(window.location.href, { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (html) {
+          if (!html) { return; }
+          var fresh = new DOMParser().parseFromString(html, 'text/html').getElementById('inboxList');
+          if (fresh && fresh.innerHTML !== list.innerHTML) { list.innerHTML = fresh.innerHTML; }
+        })
+        .catch(function () {})
+        .then(function () { busy = false; });
+    }
+    setInterval(refresh, 5000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { refresh(); } });
+  })();
+</script>
 {% endblock %}

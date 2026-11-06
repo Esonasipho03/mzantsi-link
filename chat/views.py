@@ -1,5 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse
+from django.utils import timezone
 from django.db.models import Q, Max
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -7,6 +9,7 @@ from accounts.models import User
 from accounts.visibility import visible_to
 from .models import Message
 from .forms import MessageForm
+from .templatetags.chat_extras import day_label
 
 
 def _conversations_for(me):
@@ -38,23 +41,65 @@ def inbox_view(request):
     return render(request, "chat/inbox.html", {"conversations": conversations})
 
 
+def _chat_partner(me, user_id):
+    """The person `me` may chat with, or a 404 / 403. One place for the
+    access rules so the page, the send box and the live-update poll can
+    never disagree."""
+    # Only people the viewer is allowed to see can be chatted with.
+    other = get_object_or_404(visible_to(me), pk=user_id)
+    other.photo_for_user = other.photo_for(me)
+    # Chat is a paid feature for everyone except women (men, LGBTQ+,
+    # other) — has_active_unlock() also respects the 12-month expiry.
+    if not me.has_active_unlock():
+        raise PermissionDenied("Unlock for R99 to start chatting.")
+    return other
+
+
+def _message_json(message, me):
+    return {
+        "id": message.id,
+        "mine": message.sender_id == me.id,
+        "text": message.text,
+        "time": timezone.localtime(message.created_at).strftime("%H:%M"),
+        "day": day_label(message.created_at),
+    }
+
+
+def _thread(me, other):
+    return Message.objects.filter(
+        Q(sender=me, recipient=other) | Q(sender=other, recipient=me)
+    )
+
+
+@login_required
+def messages_since_view(request, user_id):
+    """Live updates: the open chat page asks every few seconds for
+    messages newer than the last one it has, and adds them without a
+    reload. Same access rules as the page itself."""
+    me = request.user
+    other = _chat_partner(me, user_id)
+    try:
+        after = int(request.GET.get("after", 0))
+    except ValueError:
+        after = 0
+    new = _thread(me, other).filter(id__gt=after).order_by("id")
+    return JsonResponse({"messages": [_message_json(m, me) for m in new]})
+
+
 @login_required
 def conversation_view(request, user_id):
     """
-    Point 5 of the MVP: basic chat. Plain form POST + redirect — no
-    polling, no websockets. Reloading the page is how you see new
-    messages, per the brief.
+    Basic chat. New messages appear on their own: the page polls
+    messages_since_view every few seconds (no websockets), and the send
+    box posts without reloading. It still works as a plain form POST +
+    redirect if JavaScript is off.
 
     Access rule: a man can only chat once he is unlocked. Point 3 of
     the brief ("chat only if guy is paid") is enforced here.
     """
     me = request.user
-    # Only people the viewer is allowed to see can be chatted with.
-    other = get_object_or_404(visible_to(me), pk=user_id)
-    other.photo_for_user = other.photo_for(me)
-
-    if me.gender == "man" and not me.is_unlocked:
-        raise PermissionDenied("Unlock for R99 to start chatting.")
+    other = _chat_partner(me, user_id)
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
     if request.method == "POST":
         form = MessageForm(request.POST)
@@ -63,7 +108,11 @@ def conversation_view(request, user_id):
             message.sender = me
             message.recipient = other
             message.save()
+            if is_ajax:  # sent from the chat page without a reload
+                return JsonResponse({"ok": True, "message": _message_json(message, me)})
             return redirect("conversation", user_id=other.id)  # redirect avoids resubmission on refresh
+        if is_ajax:
+            return JsonResponse({"ok": False}, status=400)
     else:
         form = MessageForm()
 
@@ -71,9 +120,7 @@ def conversation_view(request, user_id):
     # Django's built-in flash-messages framework (rendered in
     # base.html), and reusing it here was shadowing that and leaking
     # the raw conversation into the site-wide alert area.
-    chat_messages = Message.objects.filter(
-        Q(sender=me, recipient=other) | Q(sender=other, recipient=me)
-    )
+    chat_messages = list(_thread(me, other))
 
     # Fed to a sidebar list that sits next to the open conversation on
     # wider screens (hidden on mobile, where the chat is full-screen).
@@ -87,6 +134,7 @@ def conversation_view(request, user_id):
     return render(request, "chat/conversation.html", {
         "other": other,
         "chat_messages": chat_messages,
+        "last_id": chat_messages[-1].id if chat_messages else 0,
         "form": form,
         "conversations": conversations,
     })

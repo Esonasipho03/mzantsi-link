@@ -47,12 +47,12 @@
       </a>
     </div>
 
-    <div class="chat-body" id="chatBody">
+    <div class="chat-body" id="chatBody" data-poll-url="{% url 'conversation_messages' other.id %}" data-last-id="{{ last_id }}">
     {% for message in chat_messages %}
       {% ifchanged message.created_at|day_label %}
         <div class="chat-day-sep"><span>{{ message.created_at|day_label }}</span></div>
       {% endifchanged %}
-      <div class="msg-row {% if message.sender == request.user %}mine{% endif %}">
+      <div class="msg-row {% if message.sender == request.user %}mine{% endif %}" data-id="{{ message.id }}">
         {% if message.sender != request.user %}
           {% if other.photo_for_user %}
             <img class="msg-avatar" src="{{ other.photo_for_user.url }}" alt="">
@@ -74,7 +74,7 @@
     {% endfor %}
     </div>
 
-    <form method="post" class="chat-input-bar">
+    <form method="post" class="chat-input-bar" id="chatForm">
       {% csrf_token %}
       {{ form.text }}
       <button type="submit" class="chat-send-btn" aria-label="Send">&#10148;</button>
@@ -84,9 +84,81 @@
 </div>
 
 <script>
+  // Live chat: shows new messages without a reload (polls every few
+  // seconds while the page is open) and sends without a page reload.
   (function () {
     var body = document.getElementById('chatBody');
-    if (body) { body.scrollTop = body.scrollHeight; }
+    var form = document.getElementById('chatForm');
+    if (!body) { return; }
+    var pollUrl = body.getAttribute('data-poll-url');
+    var lastId = parseInt(body.getAttribute('data-last-id'), 10) || 0;
+    var otherAvatar = document.querySelector('.chat-header-avatar');
+    body.scrollTop = body.scrollHeight;
+
+    function lastDay() {
+      var seps = body.querySelectorAll('.chat-day-sep span');
+      return seps.length ? seps[seps.length - 1].textContent : '';
+    }
+    function el(tag, cls, text) {
+      var e = document.createElement(tag);
+      if (cls) { e.className = cls; }
+      if (text !== undefined) { e.textContent = text; }  // textContent: message text is never treated as HTML
+      return e;
+    }
+    function addMessage(m) {
+      if (body.querySelector('[data-id="' + m.id + '"]')) { return; }   // already shown
+      var empty = body.querySelector('.empty-state');
+      if (empty) { empty.remove(); }
+      if (m.day !== lastDay()) {
+        var sep = el('div', 'chat-day-sep'); sep.appendChild(el('span', '', m.day)); body.appendChild(sep);
+      }
+      var row = el('div', 'msg-row' + (m.mine ? ' mine' : ''));
+      row.setAttribute('data-id', m.id);
+      if (!m.mine && otherAvatar) {
+        var img = el('img', 'msg-avatar'); img.src = otherAvatar.src; img.alt = ''; row.appendChild(img);
+      } else if (!m.mine) { row.appendChild(el('span', 'msg-avatar msg-avatar--empty')); }
+      var col = el('div', 'msg-col');
+      col.appendChild(el('span', 'msg-bubble', m.text));
+      col.appendChild(el('span', 'msg-time', m.time));
+      row.appendChild(col); body.appendChild(row);
+      if (m.id > lastId) { lastId = m.id; }
+    }
+    function addAll(list) {
+      if (!list.length) { return; }
+      var nearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 140;
+      list.forEach(addMessage);
+      if (nearBottom || list.some(function (m) { return m.mine; })) { body.scrollTop = body.scrollHeight; }
+    }
+
+    var busy = false;
+    function poll() {
+      if (busy || document.hidden) { return; }
+      busy = true;
+      fetch(pollUrl + '?after=' + lastId, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) { if (data) { addAll(data.messages); } })
+        .catch(function () {})
+        .then(function () { busy = false; });
+    }
+    setInterval(poll, 3000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { poll(); } });
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        var input = form.querySelector('input[type=text]');
+        if (!input || !input.value.trim() || !window.fetch) { return; }   // no JS help: normal submit
+        e.preventDefault();
+        var data = new FormData(form);
+        input.value = '';
+        fetch(form.action || window.location.href, {
+          method: 'POST', body: data, credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+          .then(function (res) { addAll([res.message]); })
+          .catch(function () { input.value = data.get('text'); form.submit(); });   // fall back to the plain form
+        input.focus();
+      });
+    }
   })();
 </script>
 {% endblock %}
