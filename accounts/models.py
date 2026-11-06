@@ -148,6 +148,18 @@ class User(AbstractUser):
         show_clear = viewer.is_authenticated and viewer.has_active_unlock()
         return self.photo if show_clear else (self.photo_blurred or self.photo)
 
+    def looking_for_label(self):
+        """What to show under "Looking for" on a profile. This used to show
+        the member's OWN gender (so a woman read "Woman"); it now shows who
+        they are looking for, in line with the visibility rules."""
+        if self.gender == "man":
+            return "Woman"
+        if self.gender == "woman":
+            return "Friendship" if self.looking_for == "friendship" else "Man"
+        if self.gender in LGBTQ_GROUP:
+            return dict(INTERESTED_IN_CHOICES).get(self.interested_in, "Both")
+        return "—"
+
     def interest_list(self):
         return [slug for slug in self.interests.split(",") if slug]
 

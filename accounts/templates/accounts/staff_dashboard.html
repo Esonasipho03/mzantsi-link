@@ -20,7 +20,7 @@
   {% for person in pending %}
     <div class="admin-row">
       {% if person.photo %}
-        <img class="admin-thumb" src="{{ person.photo.url }}" alt="{{ person.username }}">
+        <a href="{{ person.photo.url }}" target="_blank" rel="noopener" title="View full photo"><img class="admin-thumb" src="{{ person.photo.url }}" alt="{{ person.username }}"></a>
       {% else %}
         <div class="admin-thumb admin-thumb--empty"></div>
       {% endif %}
@@ -51,7 +51,7 @@
   {% for person in members %}
     <div class="admin-row">
       {% if person.photo %}
-        <img class="admin-thumb" src="{{ person.photo.url }}" alt="{{ person.username }}">
+        <a href="{{ person.photo.url }}" target="_blank" rel="noopener" title="View full photo"><img class="admin-thumb" src="{{ person.photo.url }}" alt="{{ person.username }}"></a>
       {% else %}
         <div class="admin-thumb admin-thumb--empty"></div>
       {% endif %}

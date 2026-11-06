@@ -339,7 +339,7 @@ button:active, input[type=submit]:active { transform: translateY(0); }
   aspect-ratio: auto;
   height: calc(100vh - 330px);
   height: calc(100dvh - 330px);
-  min-height: 580px;
+  min-height: 380px;
   max-height: 620px;
 }
 .swipe-card {
@@ -658,7 +658,7 @@ button:active, input[type=submit]:active { transform: translateY(0); }
 .admin-list { display: flex; flex-direction: column; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 6px 18px rgba(58, 23, 42, 0.07); }
 .admin-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
 .admin-row:last-child { border-bottom: none; }
-.admin-thumb { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; background: #eee; }
+.admin-thumb { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; flex-shrink: 0; background: #eee; }
 .admin-thumb--empty { background: #eee; }
 .admin-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; font-size: 13px; }
 .admin-row-text strong { font-family: "Baloo 2", sans-serif; font-size: 14px; }
