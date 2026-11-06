@@ -3,7 +3,7 @@ from .views import (
     signup_view, post_login_redirect, waiting_approval_view, home_view,
     profile_detail_view, my_profile_view, swipe_view, likes_view,
     profile_edit_view, gallery_photo_upload_view, gallery_photo_delete_view, settings_view,
-    staff_dashboard_view, staff_approve_view, staff_reject_view, staff_toggle_unlock_view,
+    staff_dashboard_view, staff_member_view, staff_approve_view, staff_reject_view, staff_toggle_unlock_view,
 )
 
 urlpatterns = [
@@ -20,6 +20,7 @@ urlpatterns = [
     path("profile/", my_profile_view, name="my_profile"),
     path("settings/", settings_view, name="settings"),
     path("staff/", staff_dashboard_view, name="staff_dashboard"),
+    path("staff/<int:user_id>/", staff_member_view, name="staff_member"),
     path("staff/<int:user_id>/approve/", staff_approve_view, name="staff_approve"),
     path("staff/<int:user_id>/reject/", staff_reject_view, name="staff_reject"),
     path("staff/<int:user_id>/toggle-unlock/", staff_toggle_unlock_view, name="staff_toggle_unlock"),

@@ -2,15 +2,17 @@ from datetime import timedelta
 
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
 
 from django.contrib import messages
 
 from .forms import ProfileEditForm, SignupForm
-from .models import Like, ProfilePhoto, User
+from .models import GENDER_CHOICES, Like, ProfilePhoto, User
 from .visibility import visible_to
 
 # Gate for the custom staff dashboard — reuses the normal login + the
@@ -338,18 +340,31 @@ def settings_view(request):
     return render(request, "accounts/settings.html", {"profile": request.user})
 
 
+def _staff_back(request):
+    """After an approve/reject/unlock, go back to wherever the staff member
+    was (the filtered list or a member's detail page), not always the top."""
+    nxt = request.POST.get("next", "")
+    if nxt and url_has_allowed_host_and_scheme(nxt, allowed_hosts={request.get_host()}):
+        return redirect(nxt)
+    return redirect("staff_dashboard")
+
+
 @staff_required
 def staff_dashboard_view(request):
     """A styled stand-in for Django admin's approval screen (point 6 of
     the MVP), for whoever's moderating day-to-day without needing to
     learn /admin/. Same is_staff gate as Django admin — it's a second
-    view of the same data, not a second permission system."""
+    view of the same data, not a second permission system.
+
+    The member list can be filtered (search, status, gender, access) and
+    every row opens a detail page with everything needed to verify a
+    sign-up before approving it."""
     # Staff/superuser accounts aren't members — createsuperuser also
     # leaves is_approved False, so without this they'd show up in the
     # moderation queue next to real sign-ups.
     non_staff = User.objects.filter(is_staff=False)
-    pending = non_staff.filter(is_approved=False).order_by("date_joined")
-    members = non_staff.filter(is_approved=True).order_by("-date_joined")
+    pending = non_staff.filter(is_approved=False)
+    members = non_staff.filter(is_approved=True)
 
     # "Paying" covers everyone except women (men, LGBTQ+, other) — they
     # all follow the same pay-to-unlock rule, so they're counted together
@@ -367,10 +382,51 @@ def staff_dashboard_view(request):
         "unlocked_paying": unlocked_paying,
     }
 
+    # ---- filters (all optional, all via the query string) ----
+    q = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "")
+    gender = request.GET.get("gender", "")
+    access = request.GET.get("access", "")
+
+    people = non_staff
+    if q:
+        people = people.filter(
+            Q(username__icontains=q) | Q(email__icontains=q) | Q(town__icontains=q)
+        )
+    if status == "pending":
+        people = people.filter(is_approved=False)
+    elif status == "approved":
+        people = people.filter(is_approved=True)
+    if gender in dict(GENDER_CHOICES):
+        people = people.filter(gender=gender)
+    # Waiting-for-approval first, then newest sign-ups.
+    people = list(people.order_by("is_approved", "-date_joined"))
+    # Access depends on the unlock's expiry date, so it's checked per member.
+    if access == "free":
+        people = [p for p in people if p.gender == "woman"]
+    elif access == "paid":
+        people = [p for p in people if p.gender != "woman" and p.has_active_unlock()]
+    elif access == "locked":
+        people = [p for p in people if p.gender != "woman" and not p.has_active_unlock()]
+
     return render(request, "accounts/staff_dashboard.html", {
-        "pending": pending,
-        "members": members,
+        "people": people,
         "stats": stats,
+        "filters": {"q": q, "status": status, "gender": gender, "access": access},
+        "filtered": bool(q or status or gender or access),
+        "gender_choices": GENDER_CHOICES,
+    })
+
+
+@staff_required
+def staff_member_view(request, user_id):
+    """Everything about one member, for verifying a sign-up: full photo,
+    gallery, contact and profile details, access status and payments."""
+    person = get_object_or_404(User, pk=user_id, is_staff=False)
+    return render(request, "accounts/staff_member.html", {
+        "person": person,
+        "gallery": person.extra_photos.all(),
+        "payments": person.payments.order_by("-created_at"),
     })
 
 
@@ -380,7 +436,7 @@ def staff_approve_view(request, user_id):
     target = get_object_or_404(User, pk=user_id)
     target.is_approved = True
     target.save()
-    return redirect("staff_dashboard")
+    return _staff_back(request)
 
 
 @staff_required
@@ -389,7 +445,7 @@ def staff_reject_view(request, user_id):
     target = get_object_or_404(User, pk=user_id)
     target.is_approved = False
     target.save()
-    return redirect("staff_dashboard")
+    return _staff_back(request)
 
 
 @staff_required
@@ -407,4 +463,4 @@ def staff_toggle_unlock_view(request, user_id):
         target.is_unlocked = not currently_active
         target.unlock_expires_at = timezone.now() + timedelta(days=365) if not currently_active else None
         target.save()
-    return redirect("staff_dashboard")
+    return _staff_back(request)

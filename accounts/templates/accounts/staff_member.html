@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ person.username }} — admin{% endblock %}
+{% block content %}
+
+<a class="muted" href="{% url 'staff_dashboard' %}">&larr; Back to members</a>
+
+<div class="section-label" style="margin-top:12px">{{ person.username }}, {{ person.age }}
+  {% if person.is_approved %}<span class="badge badge-ok">Approved</span>{% else %}<span class="badge badge-wait">Waiting for approval</span>{% endif %}
+</div>
+
+<div class="card staff-detail">
+  {% if person.photo %}
+    <a href="{{ person.photo.url }}" target="_blank" rel="noopener"><img class="staff-photo" src="{{ person.photo.url }}" alt="{{ person.username }}"></a>
+  {% else %}
+    <p class="muted">No photo uploaded.</p>
+  {% endif %}
+
+  {% if gallery %}
+    <div class="staff-gallery">
+      {% for g in gallery %}
+        <a href="{{ g.photo.url }}" target="_blank" rel="noopener"><img src="{{ g.photo.url }}" alt="More photos of {{ person.username }}"></a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <dl class="staff-facts">
+    <dt>Username</dt><dd>{{ person.username }}</dd>
+    <dt>Email</dt><dd>{{ person.email|default:"—" }}</dd>
+    <dt>Age</dt><dd>{{ person.age }}</dd>
+    <dt>Gender</dt><dd>{{ person.get_gender_display }}</dd>
+    <dt>Looking for</dt><dd>{{ person.looking_for_label }}{% if person.gender == "woman" %} ({{ person.get_looking_for_display }}){% endif %}</dd>
+    <dt>Town</dt><dd>{{ person.town }}</dd>
+    <dt>About</dt><dd>{{ person.bio|default:"—" }}</dd>
+    <dt>Interests</dt><dd>{% if person.interest_labels %}{{ person.interest_labels|join:", " }}{% else %}—{% endif %}</dd>
+    <dt>Joined</dt><dd>{{ person.date_joined|date:"d M Y, H:i" }}</dd>
+    <dt>Last login</dt><dd>{{ person.last_login|date:"d M Y, H:i"|default:"Never" }}</dd>
+    <dt>Access</dt>
+    <dd>
+      {% if person.gender == "woman" %}Free (women are always unlocked)
+      {% elif person.has_active_unlock %}Unlocked{% if person.unlock_expires_at %} until {{ person.unlock_expires_at|date:"d M Y" }}{% endif %}
+      {% else %}Locked (has not paid){% endif %}
+    </dd>
+  </dl>
+
+  <div class="staff-actions">
+    {% if not person.is_approved %}
+      <form method="post" action="{% url 'staff_approve' person.id %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="btn-approve">Approve</button></form>
+      <form method="post" action="{% url 'staff_reject' person.id %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'staff_dashboard' %}"><button type="submit" class="btn-reject">Reject</button></form>
+    {% else %}
+      {% if person.gender != "woman" %}
+        <form method="post" action="{% url 'staff_toggle_unlock' person.id %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="{% if person.has_active_unlock %}btn-reject{% else %}btn-approve{% endif %}">{% if person.has_active_unlock %}Lock{% else %}Unlock{% endif %}</button></form>
+      {% endif %}
+      <form method="post" action="{% url 'staff_reject' person.id %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="btn-reject">Remove approval</button></form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section-label" style="margin-top:24px">Payments</div>
+{% if payments %}
+<div class="admin-list">
+  {% for pay in payments %}
+    <div class="admin-row">
+      <div class="admin-row-text">
+        <strong>R{{ pay.amount }}</strong>
+        <span class="muted">{{ pay.created_at|date:"d M Y, H:i" }} &middot; {{ pay.get_status_display }}</span>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="muted">No payments yet.</p>
+{% endif %}
+{% endblock %}

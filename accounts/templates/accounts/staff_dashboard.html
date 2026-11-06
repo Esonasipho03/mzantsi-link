@@ -14,70 +14,76 @@
   <div class="stat-card"><strong>{{ stats.unlocked_paying }}</strong><span>Currently unlocked</span></div>
 </div>
 
-<div class="section-label" style="margin-top:28px">Waiting for approval</div>
-{% if pending %}
-<div class="admin-list">
-  {% for person in pending %}
-    <div class="admin-row">
-      {% if person.photo %}
-        <a href="{{ person.photo.url }}" target="_blank" rel="noopener" title="View full photo"><img class="admin-thumb" src="{{ person.photo.url }}" alt="{{ person.username }}"></a>
-      {% else %}
-        <div class="admin-thumb admin-thumb--empty"></div>
-      {% endif %}
-      <div class="admin-row-text">
-        <strong>{{ person.username }}, {{ person.age }}</strong>
-        <span class="muted">{{ person.get_gender_display }} &middot; {{ person.town }} &middot; joined {{ person.date_joined|date:"d M Y" }}</span>
-      </div>
-      <div class="admin-row-actions">
-        <form method="post" action="{% url 'staff_approve' person.id %}">
-          {% csrf_token %}
-          <button type="submit" class="btn-approve">Approve</button>
-        </form>
-        <form method="post" action="{% url 'staff_reject' person.id %}">
-          {% csrf_token %}
-          <button type="submit" class="btn-reject">Reject</button>
-        </form>
-      </div>
-    </div>
-  {% endfor %}
-</div>
-{% else %}
-<p class="muted">Nothing waiting — you're all caught up.</p>
-{% endif %}
+<div class="section-label" style="margin-top:28px">Members</div>
 
-<div class="section-label" style="margin-top:28px">All approved members</div>
-{% if members %}
+<form method="get" class="admin-filters">
+  <input type="text" name="q" value="{{ filters.q }}" placeholder="Search name, email or town">
+  <select name="status" aria-label="Status">
+    <option value="">All statuses</option>
+    <option value="pending" {% if filters.status == "pending" %}selected{% endif %}>Waiting for approval</option>
+    <option value="approved" {% if filters.status == "approved" %}selected{% endif %}>Approved</option>
+  </select>
+  <select name="gender" aria-label="Gender">
+    <option value="">All genders</option>
+    {% for value, label in gender_choices %}
+      <option value="{{ value }}" {% if filters.gender == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="access" aria-label="Access">
+    <option value="">All access</option>
+    <option value="paid" {% if filters.access == "paid" %}selected{% endif %}>Paid &amp; unlocked</option>
+    <option value="locked" {% if filters.access == "locked" %}selected{% endif %}>Locked (not paid)</option>
+    <option value="free" {% if filters.access == "free" %}selected{% endif %}>Free (women)</option>
+  </select>
+  <button type="submit">Filter</button>
+  {% if filtered %}<a class="btn-link-plain" href="{% url 'staff_dashboard' %}">Clear</a>{% endif %}
+</form>
+<p class="muted" style="font-size:13px;margin:8px 2px">{{ people|length }} member{{ people|length|pluralize }}{% if filtered %} match{{ people|length|pluralize:"es," }} your filter{% endif %}. Tap a name or photo for full details.</p>
+
+{% if people %}
 <div class="admin-list">
-  {% for person in members %}
+  {% for person in people %}
     <div class="admin-row">
-      {% if person.photo %}
-        <a href="{{ person.photo.url }}" target="_blank" rel="noopener" title="View full photo"><img class="admin-thumb" src="{{ person.photo.url }}" alt="{{ person.username }}"></a>
-      {% else %}
-        <div class="admin-thumb admin-thumb--empty"></div>
-      {% endif %}
-      <div class="admin-row-text">
-        <strong>{{ person.username }}, {{ person.age }}</strong>
-        <span class="muted">{{ person.get_gender_display }} &middot; {{ person.town }}</span>
-      </div>
-      <div class="admin-row-actions">
-        {% if person.gender != "woman" %}
-          <form method="post" action="{% url 'staff_toggle_unlock' person.id %}">
-            {% csrf_token %}
-            <button type="submit" class="{% if person.has_active_unlock %}btn-reject{% else %}btn-approve{% endif %}">
-              {% if person.has_active_unlock %}Lock{% else %}Unlock{% endif %}
-            </button>
-          </form>
-          {% if person.has_active_unlock and person.unlock_expires_at %}
-            <span class="muted" style="font-size:0.78rem">until {{ person.unlock_expires_at|date:"d M Y" }}</span>
-          {% endif %}
+      <a href="{% url 'staff_member' person.id %}" class="admin-row-link">
+        {% if person.photo %}
+          <img class="admin-thumb" src="{{ person.photo.url }}" alt="{{ person.username }}">
         {% else %}
-          <span class="chip-static">Always free</span>
+          <div class="admin-thumb admin-thumb--empty"></div>
+        {% endif %}
+        <div class="admin-row-text">
+          <strong>{{ person.username }}, {{ person.age }}</strong>
+          <span class="muted">{{ person.get_gender_display }} &middot; {{ person.town }} &middot; joined {{ person.date_joined|date:"d M Y" }}</span>
+          <span>
+            {% if person.is_approved %}<span class="badge badge-ok">Approved</span>{% else %}<span class="badge badge-wait">Waiting</span>{% endif %}
+            {% if person.gender == "woman" %}<span class="badge">Free</span>{% elif person.has_active_unlock %}<span class="badge badge-ok">Unlocked{% if person.unlock_expires_at %} until {{ person.unlock_expires_at|date:"d M Y" }}{% endif %}</span>{% else %}<span class="badge">Locked</span>{% endif %}
+          </span>
+        </div>
+      </a>
+      <div class="admin-row-actions">
+        {% if not person.is_approved %}
+          <form method="post" action="{% url 'staff_approve' person.id %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn-approve">Approve</button>
+          </form>
+        {% else %}
+          {% if person.gender != "woman" %}
+            <form method="post" action="{% url 'staff_toggle_unlock' person.id %}">
+              {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="{% if person.has_active_unlock %}btn-reject{% else %}btn-approve{% endif %}">{% if person.has_active_unlock %}Lock{% else %}Unlock{% endif %}</button>
+            </form>
+          {% endif %}
+        {% endif %}
+        {% if not person.is_approved %}
+          <form method="post" action="{% url 'staff_reject' person.id %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn-reject">Reject</button>
+          </form>
         {% endif %}
       </div>
     </div>
   {% endfor %}
 </div>
 {% else %}
-<p class="muted">No approved members yet.</p>
+<p class="muted">{% if filtered %}No members match that filter.{% else %}No members yet.{% endif %}</p>
 {% endif %}
 {% endblock %}
