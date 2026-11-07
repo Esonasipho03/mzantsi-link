@@ -24,7 +24,7 @@
             </div>
           </div>
           {% if last %}
-            <div class="inbox-meta"><span class="inbox-time">{{ last.created_at|short_time }}</span></div>
+            <div class="inbox-meta"><span class="inbox-time">{{ last.created_at|short_time }}</span>{% if convo_other.unread %}<span class="unread-pill">{{ convo_other.unread }}</span>{% endif %}</div>
           {% endif %}
         </a>
       {% endfor %}
@@ -126,6 +126,7 @@
     function addAll(list) {
       if (!list.length) { return; }
       var nearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 140;
+      if (list.some(function (m) { return !m.mine; }) && window.mzChime) { window.mzChime(); }
       list.forEach(addMessage);
       if (nearBottom || list.some(function (m) { return m.mine; })) { body.scrollTop = body.scrollHeight; }
     }

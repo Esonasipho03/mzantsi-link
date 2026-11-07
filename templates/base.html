@@ -1,4 +1,5 @@
 {% load static cache_bust %}
+{% load chat_extras %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -66,7 +67,7 @@
       <span class="tab-icon">&#9825;</span>Likes
     </a>
     <a class="tab {% if request.resolver_match.url_name == 'inbox' or request.resolver_match.url_name == 'conversation' %}active{% endif %}" href="{% url 'inbox' %}">
-      <span class="tab-icon">&#9993;</span>Chats
+      <span class="tab-icon">&#9993;</span>Chats{% unread_count as unread %}<span class="tab-badge" id="chatBadge" {% if not unread %}hidden{% endif %}>{{ unread }}</span>
     </a>
     <a class="tab {% if request.resolver_match.url_name == 'my_profile' %}active{% endif %}" href="{% url 'my_profile' %}">
       <span class="tab-icon">&#9679;</span>Profile
@@ -91,5 +92,6 @@
       });
     })();
   </script>
+  {% include 'partials/chat_alerts.html' %}
 </body>
 </html>

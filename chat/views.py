@@ -12,6 +12,17 @@ from .forms import MessageForm
 from .templatetags.chat_extras import day_label
 
 
+def unread_total(me):
+    """Unread messages sent to `me` by people `me` can still see."""
+    return Message.objects.filter(
+        recipient=me, read_at__isnull=True, sender__in=visible_to(me)
+    ).count()
+
+
+def _mark_read(me, other):
+    Message.objects.filter(recipient=me, sender=other, read_at__isnull=True).update(read_at=timezone.now())
+
+
 def _conversations_for(me):
     """Everyone `me` has exchanged at least one message with, most
     recent conversation first, each paired with its last message.
@@ -28,6 +39,7 @@ def _conversations_for(me):
             Q(sender=me, recipient=other) | Q(sender=other, recipient=me)
         ).order_by("-created_at").first()
         other.photo_for_user = other.photo_for(me)
+        other.unread = Message.objects.filter(sender=other, recipient=me, read_at__isnull=True).count()
         conversations.append((other, last))
 
     conversations.sort(key=lambda pair: pair[1].created_at, reverse=True)
@@ -82,8 +94,15 @@ def messages_since_view(request, user_id):
         after = int(request.GET.get("after", 0))
     except ValueError:
         after = 0
-    new = _thread(me, other).filter(id__gt=after).order_by("id")
+    new = list(_thread(me, other).filter(id__gt=after).order_by("id"))
+    _mark_read(me, other)  # the chat is open on screen, so anything arriving now is read
     return JsonResponse({"messages": [_message_json(m, me) for m in new]})
+
+
+@login_required
+def unread_count_view(request):
+    """Polled by every page to keep the Chats badge current."""
+    return JsonResponse({"count": unread_total(request.user)})
 
 
 @login_required
@@ -115,6 +134,9 @@ def conversation_view(request, user_id):
             return JsonResponse({"ok": False}, status=400)
     else:
         form = MessageForm()
+
+    if request.method == "GET":
+        _mark_read(me, other)  # opening the conversation reads it
 
     # Named chat_messages, not messages — "messages" is reserved by
     # Django's built-in flash-messages framework (rendered in

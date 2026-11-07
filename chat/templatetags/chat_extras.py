@@ -11,6 +11,16 @@ from django.utils import timezone
 register = template.Library()
 
 
+@register.simple_tag(takes_context=True)
+def unread_count(context):
+    """Number of unread messages for the logged-in member (Chats badge)."""
+    from chat.views import unread_total
+    request = context.get("request")
+    if not request or not request.user.is_authenticated or request.user.is_staff or not request.user.is_approved:
+        return 0
+    return unread_total(request.user)
+
+
 @register.filter
 def short_time(value):
     if not value:

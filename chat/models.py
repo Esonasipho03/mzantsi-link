@@ -7,6 +7,8 @@ class Message(models.Model):
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="received_messages")
     text = models.CharField(max_length=1000)
     created_at = models.DateTimeField(auto_now_add=True)
+    # When the recipient opened the message. NULL = unread (drives the Chats badge).
+    read_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["created_at"]

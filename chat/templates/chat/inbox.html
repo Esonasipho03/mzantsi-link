@@ -22,6 +22,7 @@
       </div>
       <div class="inbox-meta">
         <span class="inbox-time">{{ last.created_at|short_time }}</span>
+        {% if other.unread %}<span class="unread-pill">{{ other.unread }}</span>{% endif %}
       </div>
     </a>
   {% empty %}
