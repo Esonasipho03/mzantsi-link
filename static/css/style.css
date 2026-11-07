@@ -330,10 +330,12 @@ button:active, input[type=submit]:active { transform: translateY(0); }
   aspect-ratio: 3/3.65;
   margin: 0 auto;
 }
+
 /* Discover's card: the big, first-thing-you-see version — sized off
    the viewport height (minus header/tabbar/actions chrome) instead of
    a fixed aspect-ratio, so it fills the phone screen like a normal
    swipe app instead of sitting in a small box under other content. */
+
 .swipe-stage--big {
   max-width: 420px;
   aspect-ratio: auto;
@@ -342,6 +344,7 @@ button:active, input[type=submit]:active { transform: translateY(0); }
   min-height: 500px;
   max-height: 720px;
 }
+
 .swipe-card {
   position: absolute;
   inset: 0;
@@ -363,6 +366,7 @@ button:active, input[type=submit]:active { transform: translateY(0); }
   letter-spacing: 0.05em; padding: 5px 14px; border: 3px solid; border-radius: 10px;
   text-transform: uppercase; opacity: 0; transform: rotate(-18deg);
 }
+
 .swipe-card .stamp--like { left: 18px; color: #3CD67A; border-color: #3CD67A; }
 .swipe-card .stamp--pass { right: 18px; color: #FF4D5E; border-color: #FF4D5E; transform: rotate(18deg); }
 

@@ -1,0 +1,100 @@
+{% comment %}
+"Add Mzansi Link to your home screen" pop-up. Included from base.html for
+signed-in members only. It appears once per browser session (so right after
+they log in or register), only when the app is NOT already installed:
+  * Android / desktop Chrome and Edge: only if the browser says the app can be
+    installed (that event never fires once it is installed), then one tap installs it.
+  * iPhone / iPad Safari and browsers with no install prompt: shows the manual steps.
+"Not now" hides it for 3 days; installing hides it for good. Self-contained
+(own style and script) so it never touches style.css or pwa.js.
+{% endcomment %}
+{% load static %}
+<style>
+  .mz-install { position: fixed; left: 12px; right: 12px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 60;
+    max-width: 440px; margin: 0 auto; padding: 16px; border-radius: 20px; background: var(--surface, #fff);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); border: 1px solid var(--line, rgba(0,0,0,.1));
+    box-shadow: 0 18px 50px rgba(36, 20, 38, 0.28); color: var(--ink, #241426); animation: mzInstallUp .35s ease both; }
+  .mz-install[hidden] { display: none; }
+  @keyframes mzInstallUp { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .mz-install-row { display: flex; gap: 12px; align-items: center; }
+  .mz-install-icon { width: 46px; height: 46px; border-radius: 12px; flex: none; }
+  .mz-install-title { display: block; font-size: 1rem; }
+  .mz-install-text { margin: 2px 0 0; font-size: .85rem; color: var(--muted, #6B5660); line-height: 1.35; }
+  .mz-install-help { margin: 12px 0 0; font-size: .85rem; line-height: 1.45; color: var(--ink, #241426); }
+  .mz-install-help[hidden] { display: none; }
+  .mz-install-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .mz-install-go { flex: 1; margin: 0; padding: 11px 16px; border: 0; border-radius: 999px; cursor: pointer; font-weight: 700;
+    color: #fff; background: linear-gradient(120deg, #E8386A, #D6327C); }
+  .mz-install-later { margin: 0; padding: 11px 16px; border-radius: 999px; cursor: pointer; font-weight: 600;
+    background: transparent; color: var(--ink, #241426); border: 1.5px solid var(--line, rgba(0,0,0,.2)); box-shadow: none; }
+</style>
+
+<div class="mz-install" id="mzInstall" role="dialog" aria-label="Install Mzansi Link" hidden>
+  <div class="mz-install-row">
+    <img class="mz-install-icon" src="{% static 'img/icon-192.png' %}" alt="">
+    <div>
+      <strong class="mz-install-title">Add Mzansi Link to your home screen</strong>
+      <p class="mz-install-text">Open it in one tap, like an app, and get to your chats faster.</p>
+    </div>
+  </div>
+  <p class="mz-install-help" id="mzInstallHelp" hidden></p>
+  <div class="mz-install-actions">
+    <button type="button" class="mz-install-go" id="mzInstallGo">Install app</button>
+    <button type="button" class="mz-install-later" id="mzInstallLater">Not now</button>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var box = document.getElementById('mzInstall');
+    if (!box || document.body.classList.contains('chat-open')) { return; }
+
+    function get(store, k) { try { return window[store].getItem(k); } catch (e) { return null; } }
+    function set(store, k, v) { try { window[store].setItem(k, v); } catch (e) {} }
+
+    var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    if (standalone || get('localStorage', 'mzInstalled') === '1') { return; }               // already an app
+    if (get('sessionStorage', 'mzInstallShown') === '1') { return; }                          // once per visit
+    var snooze = parseInt(get('localStorage', 'mzInstallSnooze'), 10) || 0;
+    if (Date.now() < snooze) { return; }                                                      // tapped "Not now" recently
+
+    var ua = navigator.userAgent || '';
+    var isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var hasPromptApi = 'onbeforeinstallprompt' in window;
+    var deferred = null, shown = false;
+
+    function show() {
+      if (shown) { return; }
+      shown = true; box.hidden = false;
+      set('sessionStorage', 'mzInstallShown', '1');
+    }
+    function hide() { box.hidden = true; }
+
+    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; show(); });
+    window.addEventListener('appinstalled', function () { set('localStorage', 'mzInstalled', '1'); hide(); });
+
+    // No prompt API (iPhone/iPad Safari, Firefox): offer the manual steps after a moment.
+    // Chrome/Edge with the API only ever show it when the browser itself says "installable".
+    if (isIOS || !hasPromptApi) { setTimeout(show, 1500); }
+
+    document.getElementById('mzInstallLater').addEventListener('click', function () {
+      set('localStorage', 'mzInstallSnooze', String(Date.now() + 3 * 24 * 3600 * 1000)); hide();
+    });
+    document.getElementById('mzInstallGo').addEventListener('click', function () {
+      var help = document.getElementById('mzInstallHelp');
+      if (deferred) {
+        deferred.prompt();
+        deferred.userChoice.then(function (c) {
+          deferred = null;
+          if (c && c.outcome === 'accepted') { set('localStorage', 'mzInstalled', '1'); }
+          hide();
+        });
+        return;
+      }
+      help.textContent = isIOS
+        ? 'On iPhone: tap the Share button (the square with an arrow) at the bottom of Safari, then choose "Add to Home Screen".'
+        : 'Open your browser menu (the three dots) and choose "Install app" or "Add to Home screen".';
+      help.hidden = false;
+    });
+  })();
+</script>

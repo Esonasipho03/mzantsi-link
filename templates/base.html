@@ -93,5 +93,6 @@
     })();
   </script>
   {% include 'partials/chat_alerts.html' %}
+  {% if user.is_authenticated %}{% include 'partials/install_popup.html' %}{% endif %}
 </body>
 </html>
